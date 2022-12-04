@@ -36,3 +36,44 @@ All'interno della directory principale troviamo diverse sottodirectory e file, d
 	le email.
 	**App.php** si occupa di gestire le varie richieste ed instradare verso il giusto controller la richiesta
 	**Config.php** contiene i parametri principali di configurazione
+
+## Smarty template
+L'intero sistema sfrutto il motore di templateing "Smarty Php". Il template principale del sito è presente nel file core/templates/main.tpl, mentre in core/templates/tpl sono presenti i template di altre pagine che richiedono un aspetto grafico diverso, es. pagina di registrazione e di login.
+
+I file smarty sono identificati dall'estensione .tpl e sono caratterizzati da codice HTML all'interno del quale è possibile inserire attraverso dei TAG SMARTY (individuati dalle parentesi graffe, es. {*form_tbox}* ) degli oggetti, variabili ed altro che vanno poi ad essere inglobati nell'HTML della pagina.
+
+
+## Routes
+Ogni pagina dell'app deve rispettare delle regole fisse per poter essere mappata dal file App.php secondo questo schema
+
+|Method          |Uri                            |Action|
+|----------------|-------------------------------|-----------------------------|
+|GET						 |`domain/test`			             |'TestController@index'       |
+|POST            |`domain/test`            			 |"TestController@store"       |
+|GET             |`domain/test/create`     			 |"TestController@create"      |
+|GET             |`domain/test/{id}`       			 |"TestController@show"        |
+|PUT             |`domain/test/{id}`       			 |"TestController@update"      |
+|GET             |`domain/test/{id}/edit`  			 |"TestController@edit"        |
+|DELETE          |`domain/test/{id}`       			 |"TestController@delete"      |
+
+
+## Lingua
+
+L'app è multilingua e sfrutta le librerie di Google Translate per tradurre in automatico ogni etichetta presente nella pagina. Affinchè un etichetta venga tradotta deve essere inclusa nel tag modificatore smarty ***{form_lang value='etichetta da tradurre'}***. Ogni etichetta inserita nel tag {form_lang} verrà inserita nella tabella traduzioni ed a seconda della lingua scelta dall'utente, il sistema mostrerà la corretta traduzione.
+
+## Pagine di tipo tabella
+
+Per le pagine in cui è richiesta la gestione CRUD dei dati di una tabella, è possibile sfruttare il generatore di pagine attraverso lo script generator.php (da linea di comando).
+Passando gli opportuni parametri, questo generatore creerà la cartella all'interno di pages ed il controllor sotto controllers, es.
+****php generator.php --folder=test** --extends=TableController *[opzionale]* --model=Persona *[opzionale]***
+Nell'ordine verranno:
+ 1. creata la cartella pages/test
+ 2. creato il controller core/controllers/TestController.php per la gestione della tabella persona
+
+Richiamando la pagina domain/test il sistema mostrerà la griglia di gestione del model Persona mappato sulla tabella persona.
+NB- la crezione del model va fatta manualmente e dopo aver eseguito il generator, occorre accedere al controller per impostare i campi del db che si vuole gestire.
+
+
+
+
+
