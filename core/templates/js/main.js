@@ -1,76 +1,19 @@
+var Localization = Localization || {};
+
+
 
 $(document)
 	.ready(
 		function() {
 
-			var docCookies = {
-				getItem: function(sKey) {
-					if (!sKey || !this.hasItem(sKey)) {
-						return null;
-					}
-					return unescape(document.cookie.replace(new RegExp("(?:^|.*;\\s*)"
-						+ escape(sKey).replace(/[\-\.\+\*]/g, "\\$&")
-						+ "\\s*\\=\\s*((?:[^;](?!;))*[^;]?).*"), "$1"));
-				},
-				setItem: function(sKey, sValue, vEnd, sPath, sDomain, bSecure) {
-					if (!sKey || /^(?:expires|max\-age|path|domain|secure)$/i.test(sKey)) {
-						return;
-					}
-					var sExpires = "";
-					if (vEnd) {
-						switch (vEnd.constructor) {
-							case Number:
-								sExpires = vEnd === Infinity ? "; expires=Tue, 19 Jan 2038 03:14:07 GMT"
-									: "; max-age=" + vEnd;
-								break;
-							case String:
-								sExpires = "; expires=" + vEnd;
-								break;
-							case Date:
-								sExpires = "; expires=" + vEnd.toGMTString();
-								break;
-						}
-					}
-					document.cookie = escape(sKey) + "=" + escape(sValue) + sExpires
-						+ (sDomain ? "; domain=" + sDomain : "")
-						+ (sPath ? "; path=" + sPath : "")
-						+ (bSecure ? "; secure" : "");
-				},
-				removeItem: function(sKey, sPath) {
-					if (!sKey || !this.hasItem(sKey)) {
-						return;
-					}
-					document.cookie = escape(sKey)
-						+ "=; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-						+ (sPath ? "; path=" + sPath : "");
-				},
-				hasItem: function(sKey) {
-					return (new RegExp("(?:^|;\\s*)"
-						+ escape(sKey).replace(/[\-\.\+\*]/g, "\\$&") + "\\s*\\="))
-						.test(document.cookie);
-				},
-				keys: /*
-									 * optional method: you can safely remove
-									 * it!
-									 */function() {
-						var aKeys = document.cookie.replace(
-							/((?:^|\s*;)[^\=]+)(?=;|$)|^\s*|\s*(?:\=[^;]*)?(?:\1|$)/g, "")
-							.split(/\s*(?:\=[^;]*)?;\s*/);
-						for (var nIdx = 0; nIdx < aKeys.length; nIdx++) {
-							aKeys[nIdx] = unescape(aKeys[nIdx]);
-						}
-						return aKeys;
-					}
-			};
 
-			/*
-			 * stampa ricevute sendRequest(); function sendRequest() { $ .ajax({ url :
-			 * codebase + "/core/ajax.php?alias=stamparicevute/aj_getCoda", success :
-			 * function(data) { $('#listposts').html(data); // insert // text of //
-			 * test.php // into your // div }
-			 * 
-			 * }); } ;
-			 */
+			// tooltip demo
+			$('.tooltip-demo').tooltip({
+				selector: "[data-toggle=tooltip]",
+				container: "body"
+			});
+			// popover demo
+			$("[data-toggle=popover]").popover();
 
 			$(document).on("focus", ":input", function(e) {
 				$(this).addClass("inputhighlight");
@@ -78,56 +21,79 @@ $(document)
 				$(this).removeClass("inputhighlight");
 			});
 
-			/*
-			 * $("a") .bind( 'contextmenu', function(e) { bootbox
-			 * .alert("Utilizzo del tasto destro non consentito.");
-			 * return false; });
-			 */
 
+			$('.js-tooltip').tooltip();
 
+			$('.js-copy').click(function() {
+				var text = $(this).attr('data-copy');
+				var el = $(this);
+				copyToClipboard(text, el);
+			});
 
-
-
-			if ($('#dataTables').length > 0) {
-				$.fn.dataTable.moment('DD/MM/YYYY');
-
-				$('#dataTables')
-					.DataTable(
-						{
-							"aLengthMenu": [25, 50, 100, 200,
-								400, 1000],
-							"paging": true,
-							"ordering": true,
-							"info": true,
-							"responsive": true,
-							"language": {
-								"sEmptyTable": "Nessuna riga",
-								"sInfo": "Vista da _START_ a _END_ di _TOTAL_ elementi",
-								"sInfoEmpty": "Vista da 0 a 0 di 0 elementi",
-								"sInfoFiltered": "(filtrati da _MAX_ elementi totali)",
-								"sInfoPostFix": "",
-								"sInfoThousands": ".",
-								"sLengthMenu": "Visualizza _MENU_ elementi",
-								"sLoadingRecords": "Caricamento...",
-								"sProcessing": "Elaborazione...",
-								"sSearch": "Cerca",
-								"sZeroRecords": "La ricerca non ha portato alcun risultato.",
-								"oPaginate": {
-									"sFirst": "Inizio",
-									"sPrevious": "Precedente",
-									"sNext": "Successivo",
-									"sLast": "Fine"
-								},
-								"oAria": {
-									"sSortAscending": ": attiva per ordinare la colonna in ordine crescente",
-									"sSortDescending": ": attiva per ordinare la colonna in ordine decrescente"
-								}
-
+			$('#dataTables')
+				.DataTable(
+					{
+						/*
+						 * dom : "<'row'<'col-md-4'l><'col-md-4'B><'col-md-4'f>><'row't><'row'<'col-md-12'ip>>",
+						 * buttons : [ { extend : 'copy', text :
+						 * 'Copia' }, { extend : 'csv', text :
+						 * 'Csv' }, { extend : 'excel', text :
+						 * 'Excel' }, { extend : 'pdfHtml5',
+						 * orientation : 'landscape', pageSize :
+						 * 'LEGAL', text : 'Pdf' }, { extend :
+						 * 'print', text : 'Stampa' } ],
+						 */
+						"lengthMenu": [
+							[10, 25, 50, 100, 500, 1000,
+								-1],
+							[10, 25, 50, 100, 500, 1000,
+								_e("Tutto")]],
+						"paging": true,
+						"ordering": true,
+						"info": true,
+						"responsive": true,
+						"language": {
+							"decimal": ",",
+							"thousands": ".",
+							"sEmptyTable": _e("Nessuna riga"),
+							"sInfo": _e("Vista da _START_ a _END_ di _TOTAL_ elementi"),
+							"sInfoEmpty": _e("Vista da 0 a 0 di 0 elementi"),
+							"sInfoFiltered": _e("(filtrati da _MAX_ elementi totali)"),
+							"sInfoPostFix": "",
+							"sInfoThousands": ".",
+							"sLengthMenu": _e("Visualizza _MENU_ elementi"),
+							"sLoadingRecords": _e("Caricamento..."),
+							"sProcessing": _e("Elaborazione..."),
+							"sSearch": _e("Cerca"),
+							"sZeroRecords": _e("La ricerca non ha portato alcun risultato."),
+							"oPaginate": {
+								"sFirst": _e("Inizio"),
+								"sPrevious": _e("Precedente"),
+								"sNext": _e("Successivo"),
+								"sLast": _e("Fine")
+							},
+							"oAria": {
+								"sSortAscending": ": "
+									+ _e("attiva per ordinare la colonna in ordine crescente"),
+								"sSortDescending": ": "
+									+ _e("attiva per ordinare la colonna in ordine decrescente")
 							}
-						});
-			}
 
+						}
 
+					});
+
+			$('#myModal').modal({
+				show: true
+			});
+			$('.modal-backdrop').removeClass("modal-backdrop");
+
+			/*
+			 * var Localization_path = codebase + "/languages/"; //
+			 * Localization = {}; try {
+			 * jQuery.getScript(Localization_path + lang+ ".js"); }
+			 * catch (e) { console.log(e); }
+			 */
 
 		});
 
@@ -141,21 +107,16 @@ function checkRequired(fields) {
 	for (var i in fields) {
 		if (i.substr(0, 1) == "*") {
 			v = eval(i.substr(1));
-			// pre = "<span class='text-danger'>Errore:</span> ";
+			pre = "<br /><b>" + _e("Errore:") + "</b> ";
 		} else {
 			v = $("#" + i).val();
-			// pre = "<span class='text-warning'>Obbligatorio:</span> ";
+			pre = "<br /><b>" + _e("Campo obbligatorio") + ":</b> ";
 		}
-
-		pre = "<span class='text-warning'>Obbligatorio</span> ";
-
 		if (!v || v == "")
-			out += pre + fields[i] + "<br />";
+			out += pre + fields[i] + "\n";
 	}
 	if (out != "") {
-		bootbox
-			.alert("<h3>ATTENZIONE</h3><p>Sono presenti degli errori, verificare prima di procedere.</p>"
-				+ out);
+		bootbox.alert("<h3>" + _e("Attenzione") + "</h3>" + out);
 		return false;
 	} else
 		return true;
@@ -165,7 +126,30 @@ function jsutil_len(id) {
 	return $("#" + id).val().length;
 }
 
+function HideMenu() {
+	$("#leftcolumn .innertube").toggle(
+		150,
+		function() {
+			var visible = $("#leftcolumn .innertube").is(":visible");
 
+			if (visible) {
+				$("#contentcolumn").animate({
+					"margin-left": 190
+				});
+				$("#leftcolumn").width(180);
+				$("#minimize").attr("src",
+					codebase + "/core/templates/img/minimize.png");
+			} else {
+				$("#contentcolumn").animate({
+					"margin-left": 30
+				});
+				$("#leftcolumn").width(30);
+				$("#minimize").attr("src",
+					codebase + "/core/templates/img/show.png");
+			}
+		});
+
+}
 
 function changeuser(obj, idUtente) {
 	var form = $(obj).parents("form");
@@ -221,11 +205,11 @@ function dataCheck(obj) {
 	var y = s.substring(4);
 	var s2 = d + "/" + m + "/" + y;
 	if (s2 != valore || s.length != 8) {
-		bootbox.alert("Attenzione! La data " + valore
-			+ " è in formato non corretto (gg/mm/aaaa)!");
+		bootbox.alert(_e("Attenzione! La data") + " " + valore + " "
+			+ _e("è in formato non corretto (gg/mm/aaaa)!"));
 		good = false;
 	} else if (d < 1 || d > 31 || m < 1 || m > 12 || y < 1900 || y > 2100) {
-		bootbox.alert("Attenzione! Valori non permessi nella data " + valore
+		bootbox.alert(_e("Attenzione! Valori non permessi nella data") + " " + valore
 			+ ".");
 		good = false;
 	}
@@ -272,50 +256,65 @@ function solonumeri(campo) {
 
 	var testonum = $(":input[id='" + campo + "']").val();
 	if (isNaN(testonum)) {
-		bootbox.alert('Inserire solo valori numerici');
+		bootbox.alert(_e('Inserire solo valori numerici'));
 		$(":input[id='" + campo + "']").val("");
 		$(":input[id='" + campo + "']").focus();
 	}
 }
 
+function isNumberKey(evt) {
+	var charCode = (evt.which) ? evt.which : evt.keyCode;
+	if (charCode != 46 && charCode > 31 && (charCode < 48 || charCode > 57))
+		return false;
+	return true;
+}
 
-function stampaRicevuta(obj, idCoda, url) {
+/*
+ * Funzione creata per la traduzione del testo nei file javascript. METODO DI
+ * UTILIZZO: Passare il testo da tradurre alla funzione nel seguente modo:
+ * _a("testo da tradurre"). Se non trova la traduzione del testo restituisce il
+ * testo passato.
+ * 
+ * Alla funzione è collegato un file dizionario situato nella cartella
+ * languages. I dizionari devono avere il nome della lingua da tradurre.
+ * esempio: en_US.js, it_IT.js ecc. In base alla localizzazione seleziona il
+ * dizionario.
+ * 
+ * @param: string @return string
+ */
+function _e(s) {
 
-	printJS({
-		printable: url,
-		type: 'pdf',
-		showModal: false,
-		onPrintDialogClose: () => bootbox
-			.confirm({
-				message: "<h2>Stampa riuscita?</h2>",
-				buttons: {
-					confirm: {
-						label: '<i class="fa fa-check"></i> Si',
-						className: 'btn-success'
-					},
-					cancel: {
-						label: '<i class="fa fa-times"></i> No',
-						className: 'btn-danger'
-					}
-				},
-				callback: function(result) {
-					if (result == true) {
+	if (Localization && (v = Localization[s]))
+		return v;
+	return s;
+}
 
-						$
-							.getJSON(
-								codebase
-								+ "/core/ajax.php?alias=stamparicevute/aj_paga",
-								{
-									id: idCoda
-								},
-								function(data) {
-									if (data.result == false)
-										bootbox
-											.alert("<h3 class='text text-warning'>Si è verificato un errore con la stampa, accedere alla coda di stampa per verificare.</h3>");
-								});
-					}
-				}
-			})
+// COPY TO CLIPBOARD
+// Attempts to use .execCommand('copy') on a created text field
+// Falls back to a selectable alert if not supported
+// Attempts to display status in Bootstrap tooltip
+// ------------------------------------------------------------------------------
 
-	});
+function copyToClipboard(text, el) {
+	var copyTest = document.queryCommandSupported('copy');
+	var elOriginalText = el.attr('data-original-title');
+
+	if (copyTest === true) {
+		var copyTextArea = document.createElement("textarea");
+		copyTextArea.value = text;
+		document.body.appendChild(copyTextArea);
+		copyTextArea.select();
+		try {
+			var successful = document.execCommand('copy');
+			var msg = successful ? _e('Copiato!') : _e('Whoops, non copiato!');
+			el.attr('data-original-title', msg).tooltip('show');
+		} catch (err) {
+			console.log(_e('Oops, impossibile copiare'));
+		}
+		document.body.removeChild(copyTextArea);
+		el.attr('data-original-title', elOriginalText);
+	} else {
+		// Fallback if browser doesn't support .execCommand('copy')
+		window.prompt(_e("Per copiare: Ctrl+C o Command+C, Enter"), text);
+	}
 }

@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 class Utente extends Eloquent
 {
 
-    protected $table = "users";
+    protected $table = "utenti";
 
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'id_utente';
     
     /**
      * The attributes that are mass assignable.
@@ -18,10 +18,13 @@ class Utente extends Eloquent
      */
     protected $fillable = [
 
-        'name',
+        'cognome',
+        'nome',
         'email',
         'password',
-        'userimage'
+        'readonly',
+        'token',
+        'default_page'
     ];
 
     /**
@@ -31,17 +34,16 @@ class Utente extends Eloquent
      */
     protected $hidden = [
 
-        'password',
-        'remember_token'
+        'password'
     ];
 
     /*
      * Get Todo of User
      *
      */
-    public function todo()
+    /*public function todo()
 
     {
         return $this->hasMany('App\Models\Todo',"user_id");
-    }
+    }*/
 }

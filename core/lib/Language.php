@@ -95,7 +95,7 @@ class Language
                     $params[] = $translate;
                 }
 
-                Database::query($query, $params);
+                Database::insert($query, $params);
             } elseif (empty($translation)) {
 
                 /**
@@ -116,7 +116,7 @@ class Language
                 $params[] = $translationAlias;
 
                 if (! empty($fields))
-                    Database::query($query, $params);
+                    Database::update($query, $params);
             }
         }
         $translation = vsprintf($translation, $arguments);

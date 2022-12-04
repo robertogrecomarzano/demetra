@@ -2,60 +2,19 @@
 namespace App\Core\Lib;
 
 use App\Core\Config;
-use App\Core\Classes\User;
+use App\Core\User;
+use Melbahja\Environ\Environ;
 use Exception;
 use PDO;
-
+use Illuminate\Database\Capsule\Manager as DB;
 
 /**
- * Classe singleton per la gestione e comunicazione
- * col DB.
+ * Classe wrapper per accedere al Database
  */
 class Database
 {
 
-    /**
-     *
-     * @var Database
-     */
-    private static $instance;
-
-    // L'istanza singleton (obbligatoriamente private e static)
-
-    /**
-     *
-     * @var PDO
-     */
-    public static $connection;
-
-    private static $sql = "";
-
     private static $caller;
-
-    /**
-     * Costruttore (obbligatoriamente private)
-     */
-    private function __construct()
-    {
-        self::initializeConnection();
-    }
-
-    /**
-     * Inserito per evitare che il singleton venga clonato
-     */
-    private function __clone()
-    {}
-
-    /**
-     *
-     * @return Database
-     */
-    public static function getInstance()
-    {
-        if (self::$instance == null)
-            self::$instance = new self();
-        return self::$instance;
-    }
 
     /**
      * Imposta la lingua locale
@@ -64,79 +23,40 @@ class Database
      */
     public static function setLocale($locale)
     {
-        $db = self::getInstance();
-        $st = $db->getDb()->prepare("SET lc_time_names = ?");
-        $st->execute(array(
+        $db = DB::connection();
+        $db->statement("SET lc_time_names = ?", [
             $locale
-        ));
-    }
-
-    /**
-     * Crea connessione
-     */
-    public static function initializeConnection()
-    {
-        try {
-            $connString = sprintf("%s:host=%s;port=%s;dbname=%s", Config::$pdoDbms, Config::$host, Config::$port, Config::$db);
-            self::$connection = new PDO($connString, Config::$user, Config::$pass, array(
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"
-            )); // PDO::ATTR_AUTOCOMMIT => FALSE
-        } catch (Exception $ex) {
-            die("Attenzione, errore nella connessione al database.");
-        }
-    }
-
-    public static function quote($value)
-    {
-        $db = self::getInstance()->getDb();
-        return $db->quote($value);
-    }
-
-    /**
-     * Ritorna la Connessione
-     *
-     * @return PDO
-     */
-    public static function getDb()
-    {
-        return self::$connection;
+        ]);
     }
 
     /**
      * Ritorna il messaggio di errore SQL
      * Se non SuperUser ritorna un semplice messaggio senza il dettaglio dell'errore.
      *
-     * @param string $st
+     * @param string $error
      */
-    static function setSqlError($st, $array = null)
+    static function setSqlError($error)
     {
-        $db = self::getInstance()->getDb();
-        if ($db->inTransaction()) {
+        $db = DB::connection();
+
+        if ($db->transactionLevel() > 0) {
             $page = Page::getInstance();
             $page->addError("Transazione annullata");
             $db->rollBack();
         }
 
         $debug = Config::$config["debug"];
-        $errors = $st->errorInfo();
-        $trace = self::generateCallTrace();
-        $trace_errors = implode("<br />", $trace);
-        $page = Page::getInstance();
 
-        $query = str_replace("?", "%s", self::$sql);
-        $query = vsprintf($query, $array);
-
+        $message = "ERRORE SQL<br />" . $error . "<br />" . self::$caller[0]["file"] . " alla linea " . self::$caller[0]["line"] . "";
         if ($debug)
-            die("ERRORE SQL " . $errors[2] . "<br />" . $trace_errors . "<br />$query");
+            print("<pre class='alert alert-danger'>$message</pre>");
         else {
             if (User::isSuperUser())
-                $page->addError("ERRORE SQL " . $errors[2] . "<br />" . $trace_errors . "<br />$query");
+                print("<pre class='alert alert-danger'>$message</pre>");
             else {
-
-                $text = date("d/m/Y H:i:s") . "<hr />" . $errors[2] . "<hr />" . self::$sql . "<hr />" . $query . "<hr />" . $trace_errors;
-                die($text);
+                $page = Page::getInstance();
                 $utente = User::getLoggedUserName();
-                Mail::sendPHPMailer(Config::$config["email_support"], "Errore SQL - [$utente]", $text);
+                Mail::sendPHPMailer(Config::$config["email_support"], "Errore SQL - [$utente]", $message);
                 Page::redirect("home", "", true, "<h3 class='text-center'>Si è verificato un errore, l'operazione è stata annullata ed una e-mail di segnalazione è stata inviata al supporto tecnico.</h3>", "danger");
             }
         }
@@ -156,34 +76,8 @@ class Database
         $sql = "SELECT COUNT(*) FROM $table";
         if (! empty($where))
             $sql .= " WHERE $where";
-        self::$sql = $sql;
-        // array_walk($parameters, function (&$v, $k) {
-        // $v = htmlspecialchars($v);
-        // });
+
         return self::getField($sql, $parameters);
-    }
-
-    /**
-     * Ritorna la lista chiamate che genera l'errore Sql
-     *
-     * @return array
-     */
-    private static function generateCallTrace()
-    {
-        $e = new Exception();
-        $trace = explode("\n", $e->getTraceAsString());
-        // reverse array to make steps line up chronologically
-        $trace = array_reverse($trace);
-        array_shift($trace); // remove {main}
-        array_pop($trace); // remove call to this method
-        $length = count($trace);
-        $result = array();
-
-        for ($i = 0; $i < $length; $i ++) {
-            $result[] = ($i + 1) . ')' . substr($trace[$i], strpos($trace[$i], ' ')); // replace '#someNum' with '$i)', set the right ordering
-        }
-
-        return $result;
     }
 
     /**
@@ -191,25 +85,18 @@ class Database
      *
      * @param string $sql
      * @param array $parameters
-     *            [eventuale array con parametri]
+     *
      * @return array
      */
-    public static function getRow($sql, array $parameters = null, $mode = PDO::FETCH_ASSOC)
+    public static function getRow($sql, array $parameters = [], $mode = PDO::FETCH_ASSOC)
     {
-        $db = self::getInstance();
-        $st = $db->getDb()->prepare($sql);
-        self::$sql = $sql;
-        // array_walk($parameters, function (&$v, $k) {
-        // $v = htmlspecialchars($v);
-        // });
-        $res = $st->execute($parameters);
-        if ($res) {
-            $data = $st->fetchAll($mode);
-            if (count($data) > 0)
-                return $data[0];
-            return null;
-        } else {
-            self::setSqlError($st, $parameters);
+        try {
+            $row = DB::connection()->selectOne($sql, $parameters);
+            return json_decode(json_encode($row), true);
+        } catch (Exception $e) {
+            $callers = debug_backtrace();
+            self::$caller = $callers;
+            self::setSqlError($e->getMessage());
             return null;
         }
     }
@@ -218,114 +105,96 @@ class Database
      * Restituisce un campo data una query in ingresso
      *
      * @param string $sql
-     * @param
-     *            array string $parameters [eventuale array con parametri]
+     * @param array $parameters
      * @return string
      */
-    public static function getField($sql, array $parameters = null)
+    public static function getField($sql, array $parameters = [])
     {
-        $db = self::getInstance();
-        $st = $db->getDb()->prepare($sql);
-        self::$sql = $sql;
-        // array_walk($parameters, function (&$v, $k) {
-        // $v = htmlspecialchars($v);
-        // });
-        $res = $st->execute($parameters);
-        if ($res) {
-            $data = $st->fetchAll(PDO::FETCH_COLUMN);
-            return count($data) > 0 ? $data[0] : "";
-        } else {
+        try {
+            return reset(DB::connection()->select($sql, $parameters)[0]);
+        } catch (Exception $e) {
             $callers = debug_backtrace();
             self::$caller = $callers;
-            self::setSqlError($st, $parameters);
+            self::setSqlError($e->getMessage());
             return null;
         }
     }
 
     /**
-     * Esegue una query e restituisce il resultset come array, o false
-     * se c'è errore
+     * Esegue una query e restituisce il resultset come array, o false se c'è errore
      *
      * @param string $sql
      * @param array $parameters
-     * @param PDO $mode
      * @return array
      */
-    static function getRows($sql, array $parameters = null, $mode = PDO::FETCH_ASSOC)
+    static function getRows($sql, array $parameters = [])
     {
-        if (empty($sql))
-            return null;
-        $data = array();
-
-        $db = self::getInstance();
-        $st = $db->getDb()->prepare($sql);
-        self::$sql = $sql;
-        // array_walk($parameters, function (&$v, $k) {
-        // $v = htmlspecialchars($v);
-        // });
-        $res = $st->execute($parameters);
-        if ($res) {
-            $data = $st->fetchAll($mode);
-            return $data;
-        } else {
+        try {
+            $rows = DB::connection()->select($sql, $parameters);
+            return json_decode(json_encode($rows), true);
+        } catch (Exception $e) {
             $callers = debug_backtrace();
             self::$caller = $callers;
-            self::setSqlError($st, $parameters);
+            self::setSqlError($e->getMessage());
             return null;
         }
     }
 
     /**
-     * Esegue una insert
+     * Esegue una query di INSERT
      *
      * @param string $sql
-     * @param
-     *            array parametri
+     * @param array $parameters
      * @return bool true|false
      */
-    static function insert($sql, array $parameters = null)
+    static function insert($sql, array $parameters = [])
     {
-        $db = self::getInstance();
-        $st = $db->getDb()->prepare($sql);
-        self::$sql = $sql;
-        // array_walk($parameters, function (&$v, $k) {
-        // $v = htmlspecialchars($v);
-        // });
-        $res = $st->execute($parameters);
-        if (! $res) {
+        try {
+            return DB::connection()->insert($sql, $parameters);
+        } catch (Exception $e) {
             $callers = debug_backtrace();
             self::$caller = $callers;
-            self::setSqlError($st, $parameters);
+            self::setSqlError($e->getMessage());
             return null;
         }
-        return $res;
     }
 
     /**
-     * Esegue una query
+     * Esegue una query di UPDATE
      *
      * @param string $sql
-     * @param
-     *            array parametri
+     * @param array $parameters
      * @return bool true|false
      */
-    static function query($sql, array $parameters = null)
+    static function update($sql, array $parameters = [])
     {
-        $db = self::getInstance();
-        $st = $db->getDb()->prepare($sql);
-        self::$sql = $sql;
-        // array_walk($parameters, function (&$v, $k) {
-        // $v = htmlspecialchars($v);
-        // });
-        $res = $st->execute($parameters);
-        if (! $res) {
+        try {
+            return DB::connection()->update($sql, $parameters);
+        } catch (Exception $e) {
             $callers = debug_backtrace();
             self::$caller = $callers;
-            self::setSqlError($st, $parameters);
-
+            self::setSqlError($e->getMessage());
             return null;
         }
-        return $res;
+    }
+
+    /**
+     * Esegue una query di DELETE
+     *
+     * @param string $sql
+     * @param array $parameters
+     * @return bool true|false
+     */
+    static function delete($sql, array $parameters = [])
+    {
+        try {
+            return DB::connection()->delete($sql, $parameters);
+        } catch (Exception $e) {
+            $callers = debug_backtrace();
+            self::$caller = $callers;
+            self::setSqlError($e->getMessage());
+            return null;
+        }
     }
 
     /**
@@ -334,13 +203,15 @@ class Database
      * @param string $table
      * @param array $except
      */
-    static function getFieldsString($table, $except = array())
+    static function getFieldsString($table, $except = [])
     {
+        Environ::load(".");
+        $db = Environ::get('DATABASE')["DBNAME"];
         $mark = array();
-        $parameters = array(
+        $parameters = [
             $table,
-            Config::$db
-        );
+            $db
+        ];
 
         foreach ($except as $o) {
             $mark[] = "column_name!=?";
@@ -350,9 +221,6 @@ class Database
         $mark = ! empty($mark) ? "AND " . implode(" AND ", $mark) : "";
 
         $sql = "SELECT GROUP_CONCAT(column_name) AS campi FROM information_schema.columns WHERE table_name=? AND table_schema=? $mark";
-        // array_walk($parameters, function (&$v, $k) {
-        // $v = htmlspecialchars($v);
-        // });
         return self::getField($sql, $parameters);
     }
 
@@ -364,7 +232,7 @@ class Database
      * @param string $start_with
      * @return array
      */
-    static function describeTableFields($table, $except = array(), $start_with = null)
+    static function describeTableFields($table, $except = [], $start_with = null)
     {
         $fields = [];
         $sql = "SHOW FULL COLUMNS FROM $table";
@@ -411,12 +279,24 @@ class Database
      */
     static function table_exist($table, $db = null)
     {
-        if (empty($db))
-            $db = Config::$db;
+        if (empty($db)) {
+            Environ::load(".");
+            $db = Environ::get('DATABASE')["DBNAME"];
+        }
         $tot = self::getCount("information_schema.tables", "table_schema = ? AND table_name = ?", array(
             $db,
             $table
         ));
         return $tot > 0;
+    }
+
+    /**
+     * Restituisce l'ultimo autoincremente creto
+     *
+     * @return string
+     */
+    static function getLastIsertId()
+    {
+        return DB::connection()->getPdo()->lastInsertId();
     }
 }

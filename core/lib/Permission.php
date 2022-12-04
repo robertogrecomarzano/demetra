@@ -1,7 +1,7 @@
 <?php
 namespace App\Core\Lib;
 
-use App\Core\Classes\User;
+use App\Core\User;
 use IPermissions;
 
 class Permission implements IPermissions

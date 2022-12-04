@@ -7,17 +7,17 @@ use App\Core\Config;
  */
 class Framework
 {
-
+    
     static function getCorePath()
     {
         return Config::$serverRoot . DS . "core";
     }
-
+    
     static function getPluginPath()
     {
         return Config::$serverRoot . DS . "components";
     }
-
+    
     /**
      *
      * @param string $plugin

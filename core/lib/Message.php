@@ -130,8 +130,9 @@ class Message
                     ),
                     "params" => $this->params
                 ));
-                $retvalue = Mail::sendPHPMailer($this->destinatario_email, $this->subject, $header . $message . $footer, $header . $message . $footer, $this->allegati);
 
+                $retvalue = Mail::sendPHPMailer($this->destinatario_email, $this->subject, $header . $message . $footer, $header . $message . $footer, $this->allegati);
+                
                 if ($retvalue['SUCCESS'] == "FALSE")
                     $page->addWarning("Errore in fase di invio email all'indirizzo " . $this->destinatario_email);
                 else {

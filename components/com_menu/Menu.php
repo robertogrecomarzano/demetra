@@ -14,6 +14,8 @@ use SimpleXMLElement;
 class Menu extends Plugin
 {
 
+    public static $instance;
+
     /**
      * Id del nodo attivo
      *
@@ -40,6 +42,15 @@ class Menu extends Plugin
     );
 
     public $css = array();
+
+    public static function getInstance()
+    {
+        if (self::$instance == null) {
+            $className = __CLASS__;
+            self::$instance = new $className();
+        }
+        return self::$instance;
+    }
 
     /**
      * Carica la versione base del menu (senza le voci dinamiche e hooks) dall'xml
@@ -134,14 +145,16 @@ class Menu extends Plugin
      *            Attributo "special" per aggiunte di altri nodi tramite special
      * @return SimpleXMLElement Riferimento al nodo creato
      */
-    static public function appendToNode(SimpleXMLElement $parentNode = null, $id, $label, $desc, $pagelabel = "", $special = "", $other = null, $icon = "", $html = "", $options = ["left"=>true])
+    static public function appendToNode(SimpleXMLElement $parentNode = null, $id, $label, $desc, $pagelabel = "", $special = "", $other = null, $icon = "", $html = "", $options = [
+        "left" => true
+    ])
     {
         if (is_null($parentNode))
             return;
 
         $new = $parentNode->addChild("node");
-        foreach($options as $key=>$val)
-            $new->addAttribute($key,$val);
+        foreach ($options as $key => $val)
+            $new->addAttribute($key, $val);
 
         Menu::setNodeProperties($new, $id, $label, $desc, $pagelabel, $special, $other, $icon, $html);
         return $new;
@@ -217,7 +230,6 @@ class Menu extends Plugin
     {
         $safe_value = preg_replace('/&(?!\w+;)/', '&amp;', $value);
         $subitem = $node->addChild($id, $safe_value);
-
     }
 
     /**
@@ -229,7 +241,6 @@ class Menu extends Plugin
      */
     static public function styleMenu($xsl, $folder = null)
     {
-
         $m = new Menu();
         $f = $m->serverFolder();
         $xsl = simplexml_load_file($f . DS . "xsl" . DS . $xsl . '.xsl');
@@ -254,13 +265,11 @@ class Menu extends Plugin
             $subfolder = implode("/", $pagina);
         }
 
-
         $proc->setParameter('', array(
             "id" => Menu::$activeNodeId,
             "siteUrl" => Config::$urlRoot,
             "folder" => $folder,
             "subfolder" => $subfolder
-
         ));
 
         return $proc->transformToXML(Menu::$tree);
@@ -275,12 +284,11 @@ class Menu extends Plugin
 
     /**
      * Imposta il nodo correntemente attivo
-     *
-     * @param string $id
      */
-    static public function setActive($id)
+    static public function setActive()
     {
-        Menu::$activeNodeId = $id;
+        $page = Page::getInstance();
+        Menu::$activeNodeId = $page->alias;
     }
 
     /**
@@ -296,7 +304,7 @@ class Menu extends Plugin
      *            Eventuale valore di default se nodo non trovato
      * @return string Contenuto testuale
      */
-    static public function getNodeSub($node, $id,$default = "")
+    static public function getNodeSub($node, $id, $default = "")
     {
         $node1 = Menu::$tree->xpath("//node[@id='$id']/{$node}");
         $label = (count($node1) > 0) ? (string) $node1[0] : $default;
@@ -364,7 +372,7 @@ class Menu extends Plugin
         if (! empty($id))
             $alias .= "/" . $id;
 
-            $node = Menu::findNodeById($alias);
+        $node = Menu::findNodeById($alias);
 
         if (empty($node))
             return true;
@@ -379,7 +387,6 @@ class Menu extends Plugin
      * Restituisce true se il nodo corrente ha dei nodi figli "node"
      *
      * @param string $id
-     *            del nodo padre
      * @return boolean
      */
     static function hasChildren($id)
@@ -390,9 +397,8 @@ class Menu extends Plugin
     }
 
     /**
-     * Trova un nodo tramite l'attributo xml "id"
+     * Trova il nodo root
      *
-     * @param string $id
      * @return SimpleXMLElement
      */
     static public function findRootNode()

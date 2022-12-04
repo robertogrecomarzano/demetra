@@ -2,7 +2,7 @@
 namespace App\Core\Lib;
 
 use App\Core\Config;
-use App\Core\Classes\User;
+use App\Core\User;
 
 class Servizi
 {
@@ -108,7 +108,7 @@ class Servizi
 
     static function addServizioGruppoRegione($idGruppo, $idServizio)
     {
-        Database::query("INSERT INTO servizi_config_gruppo SET id_gruppo_utente=?, id_servizio=? ", array(
+        Database::insert("INSERT INTO servizi_config_gruppo SET id_gruppo_utente=?, id_servizio=? ", array(
             $idGruppo,
             $idServizio
         ));
@@ -123,14 +123,14 @@ class Servizi
         ));
         if ($tot > 0)
             return;
-        return Database::query("INSERT IGNORE INTO servizi_utenti SET id_utente=?, id_servizio=?, id_gruppo=?", array(
+        return Database::insert("INSERT IGNORE INTO servizi_utenti SET id_utente=?, id_servizio=?, id_gruppo=?", array(
             $idUtente,
             $idServizio,
             $idGruppo
         ));
     }
 
-    static function getServiziRegione()
+    static function getServiziLista()
     {
         $sql = "SELECT DISTINCT s.*
 				FROM servizi s 
@@ -143,7 +143,7 @@ class Servizi
 
     static function addServizioDefault($idServizio)
     {
-        Database::query("INSERT INTO servizi_default  SET id_servizio=?", array(
+        Database::insert("INSERT INTO servizi_default  SET id_servizio=?", array(
             $idServizio
         ));
     }
@@ -165,7 +165,7 @@ class Servizi
             if (Database::getCount("utenti_permessi_risorse", "type='PAGE' AND name=?", array(
                 $pagina
             )) == 0)
-                Database::query("INSERT INTO utenti_permessi_risorse SET type='PAGE', name=?", array(
+                Database::insert("INSERT INTO utenti_permessi_risorse SET type='PAGE', name=?", array(
                     $pagina
                 ));
         }

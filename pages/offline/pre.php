@@ -1,4 +1,9 @@
 <?php
+use App\Core\Config;
+use App\Core\User;
+use App\Core\Lib\Database;
+use App\Core\Lib\Page;
+
 if (! Config::$config["offline"])
     Page::redirect("home");
 else if (isset($_POST['username']) && isset($_POST['password']) && ! User::isUserLogged()) {

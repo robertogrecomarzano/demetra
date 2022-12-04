@@ -1,11 +1,12 @@
 <?php
 namespace App\Core\Lib;
 
-use App\Components\Menu;
 use Smarty;
+use App\Components\Menu;
+use App\Core\App;
 use App\Core\Framework;
 use App\Core\Config;
-use App\Core\Classes\User;
+use App\Core\User;
 
 /**
  * Classe per la gestione delle pagine
@@ -14,6 +15,8 @@ class Page
 {
 
     private static $instance;
+
+    private $dump = "";
 
     public static $read = true;
 
@@ -76,6 +79,8 @@ class Page
      * @var string
      */
     public $template = "";
+
+    public $view = "";
 
     public $templateExport = "";
 
@@ -204,6 +209,7 @@ class Page
     private function loadPlugin($pluginName)
     {
         $path = Framework::getPluginFolder($pluginName) . DS . "$pluginName.php";
+
         if (file_exists($path))
             return include ($path);
         else {
@@ -244,13 +250,13 @@ class Page
      * @param string $restResto
      *            dell'indirizzo (parametri e querystring), es. "/4", "/34?param=value"
      */
-    static function redirect($alias, $rest = "", $post = false, $msg = null, $alert = "success")
+    static function redirect($alias, $rest = "", $post = false, $msg = null, $class = "success")
     {
         $page = Page::getInstance();
         if ($post) {
             $_SESSION["redirect"]["post"] = true;
             $_SESSION["redirect"]["msg"] = $msg;
-            $_SESSION["redirect"]["alert"] = $alert;
+            $_SESSION["redirect"]["class"] = $class;
         }
 
         $rest = (! empty($rest)) ? "?param=$rest" : "?fp=" . $page->alias;
@@ -300,7 +306,6 @@ class Page
             ));
             return false;
         }
-
         return $plugin;
     }
 
@@ -357,6 +362,9 @@ class Page
      */
     function webFolder()
     {
+        if (str_ends_with($page->alias, "/create"))
+            $this->alias = preg_replace('#\/[^/]*$#', '', $this->alias);
+
         return Config::$urlRoot . "/pages/" . $this->alias;
     }
 
@@ -377,6 +385,9 @@ class Page
 
     function getPath()
     {
+        if (str_ends_with($page->alias, "/create"))
+            $this->alias = preg_replace('#\/[^/]*$#', '', $this->alias);
+
         return Config::$serverRoot . DS . "pages" . DS . $this->alias;
     }
 
@@ -384,9 +395,11 @@ class Page
      *
      * @return string
      */
-    function getTemplateServerPath($tplfile = "main")
+    function getTemplateServerPath($template = null)
     {
-        $tplPath = $this->serverFolder() . DS . "templates" . DS . $tplfile . ".tpl";
+        if (empty($template))
+            $template = $this->view;
+        $tplPath = $this->serverFolder() . DS . "templates" . DS . $template . ".tpl";
         return $tplPath;
     }
 
@@ -498,26 +511,6 @@ class Page
         if (empty($testi))
             return $out;
 
-        switch ($class) {
-            case "alert alert-danger":
-                $type = "danger";
-                $delay = "0"; // sempre visibile
-
-                break;
-            case "alert alert-warning":
-                $type = "warning";
-                $delay = "0"; // sempre visibile
-                break;
-            case "alert alert-success":
-                $type = "success";
-                $delay = "0"; // sempre visibile
-                break;
-            case "alert alert-info":
-                $type = "info";
-                $delay = "0"; // sempre visibile
-                break;
-        }
-
         $testi = array_unique($testi);
 
         if (count($testi) == 1) {
@@ -536,32 +529,9 @@ class Page
             $out .= "</ul>";
         }
 
-        $title = null;
-        return '<!-- start messages, warnings, errors, info alert -->
-                 <script>$.notify(
-                    {
-                        // options
-                        title : "' . $title . '",
-                        message: "' . addslashes($out) . '"
-                    },
-                    {
-                        // settings
-                        type: "' . $type . '",
-                        delay: "' . $delay . '",
-                        offset: 5,
-	                    spacing: 5,
-                        animate: {
-                                enter: "animated fadeInLeft",
-		                        exit: "animated fadeOutLeft"
-	                              },
-                        placement: {
-			                     align: "center"
-		                          }
-                    }
-
-);
-                 </script>
-                <!-- end messages, warnings, errors, info alert -->';
+        return HTML::tag("div", [
+            "class" => $class
+        ], $out);
     }
 
     /**
@@ -599,7 +569,13 @@ class Page
                 "args" => array()
             );
 
-        $content = $this->fetchTemplate();
+        // $content = $this->fetchTemplate();
+
+        $view = $this->fetchTemplate();
+
+        if (! file_exists($view) && ! empty($view))
+            header("Location: " . Config::$urlRoot . "/404?msg=Template non trovato $view");
+
         $errors = $this->renderAlerts($this->errors, "alert alert-danger");
         $warnings = $this->renderAlerts($this->warnings, "alert alert-warning");
         $messages = $this->renderAlerts($this->messages, "alert alert-success");
@@ -608,8 +584,8 @@ class Page
         $js = $this->css->getScripts();
         $css = $this->css->getCSS();
 
-        $userSimulationSuper = User::userSimulationSuperUserHtml();
-        $userSimulationProfilo = User::userSimulationUserProfiloHtml();
+        $userSimulationSuper = App::userSimulationSuperUserHtml();
+        $userSimulationProfilo = App::userSimulationUserProfiloHtml();
         $welcome = isset($_SESSION['user']);
 
         $iniziali = null;
@@ -631,11 +607,12 @@ class Page
             "templateCSSUrl" => Config::$urlRoot . "/core/templates/css",
             "templateJSUrl" => Config::$urlRoot . "/core/templates/js",
             "welcome" => $welcome,
-            "login" => Page::getURLStatic("login"),
-            "logout" => Page::getURLStatic("logout"),
+            "login" => Page::getURLStatic("authentication/login"),
+            "logout" => Page::getURLStatic("authentication/logout"),
             "css" => $css,
             "js" => $js,
-            "mainContent" => $content,
+            "mainContent" => $view,
+            "pagina" => $view,
             "mainErrors" => $errors,
             "mainWarnings" => $warnings,
             "mainMessages" => $messages,
@@ -644,6 +621,7 @@ class Page
             "userSimulationProfilo" => $userSimulationProfilo,
             "userProfilo" => User::getLoggedUserGroup(),
             "userNominativo" => User::getLoggedUserNominativo(),
+            "userId" => User::getLoggedUserId(),
             "userIniziali" => $iniziali . " ",
             "formToken" => $this->token,
             "alias" => $this->alias,
@@ -652,7 +630,8 @@ class Page
             "logo" => empty($this->logoCustom) ? "logo" : $this->logoCustom,
             "struttura" => Config::$config["denominazione"],
             "isDebug" => Config::$config["debug"],
-            "isCollaudo" => Config::$config["collaudo"]
+            "isCollaudo" => Config::$config["collaudo"],
+            "dump" => $this->dump
         ));
 
         $this->tpl->assign($this->assigns);
@@ -684,7 +663,7 @@ class Page
         $this->tpl->registerPlugin("function", "form_add", "App\Core\Lib\Form::add");
         $this->tpl->registerPlugin("function", "form_add2", "App\Core\Lib\Form::add2");
         $this->tpl->registerPlugin("function", "form_confirm", "App\Core\Lib\Form::confirm");
-
+        $this->tpl->registerPlugin("function", "form_submit", "App\Core\Lib\Form::submit");
         $this->tpl->registerPlugin("function", "form_button", "App\Core\Lib\Form::button");
         $this->tpl->registerPlugin("function", "form_link", "App\Core\Lib\Form::link");
         $this->tpl->registerPlugin("function", "form_select_group", "App\Core\Lib\Form::selectGroup");
@@ -695,7 +674,25 @@ class Page
         $this->tpl->registerPlugin("function", "form_closing", "App\Core\Lib\Form::form_close");
         $this->tpl->registerPlugin("function", "form_opening", "App\Core\Lib\Form::form_open");
         $this->tpl->registerPlugin("function", "form_table", "App\Core\Lib\Form::form_table");
-        
+
+        $this->tpl->registerPlugin("function", "form_show_dropdown", "App\Core\Lib\Form::show_dropdown");
+        $this->tpl->registerPlugin("function", "form_edit_dropdown", "App\Core\Lib\Form::edit_dropdown");
+        $this->tpl->registerPlugin("function", "form_create_dropdown", "App\Core\Lib\Form::create_dropdown");
+
         $this->tpl->registerPlugin("function", "form_lang", "App\Core\Lib\Form::translate");
+    }
+
+    function dump($object)
+    {
+        if (! Config::$config["is_debug"])
+            return null;
+        
+        $callers = debug_backtrace();
+        $errore = "<br />" . $callers[0]["file"] . " linea " . $callers[0]["line"];
+        ob_start();
+        $dump = Debug::var_dump($object);
+        $content = ob_get_contents();
+        ob_end_clean();
+        $this->dump = $errore . $dump . $content;
     }
 }

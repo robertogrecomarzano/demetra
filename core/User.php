@@ -1,13 +1,12 @@
 <?php
-namespace App\Core\Classes;
+namespace App\Core;
 
-use App\Core\Config;
+use App\Components\Menu;
 use App\Core\Lib\Database;
+use App\Core\Lib\Language;
 use App\Core\Lib\Page;
 use App\Core\Lib\Permission;
-use App\Core\Lib\Servizi;
-use App\Components\Menu;
-use PDO;
+use Melbahja\Environ\Environ;
 
 /**
  * Classe di gestione degli utenti del sito
@@ -23,122 +22,15 @@ class User
 
     private static $pg = "";
 
-    private static $regione = "";
-
-    /**
-     * Cartella installazione
-     *
-     * @var string
-     */
-    private static $folder = "";
-
-    /**
-     * Inizializzazione pagina, con controllo della sessione ed eventuale redirect
-     */
-    static function initPage()
-    {
-        // Operazione da fare come prima
-        User::setConfig();
-
-        $page = Page::getInstance();
-
-        User::$pg = $page->alias;
-
-        if (Config::$config["offline"] && ! User::isUserInGroups([
-            "superuser",
-            "administrator"
-        ])) {
-
-            if (User::$pg != "offline")
-                Page::redirect("offline");
-            else
-                User::logout();
-        } else {
-
-            if (User::$pg == "notfound")
-                return;
-
-            // Controllo session scaduta
-            if (! User::isUserLogged()) {
-
-                $apage = explode("/", User::$pg);
-                $base = $apage[0];
-
-                if (! in_array(User::$pg, Config::$openPage) && $base != "public") {
-                    header("Location: " . Config::$config["web"]);
-                }
-            }
-
-            // Controllo user simulation - Utente - Gruppo
-            if (isset($_POST['userSimSelectGruppo']) && ! empty($_POST['userSimSelectGruppo'])) {
-
-                $simulatedGroup = $_POST['userSimSelectGruppo'];
-                User::logUser(User::getLoggedUserId(), $simulatedGroup);
-                $_SESSION['user']['simulation']['id'] = User::getLoggedUserId();
-                $_SESSION['user']['simulation']['gruppo'] = $simulatedGroup;
-                $_SESSION['user']['gruppo'] = $simulatedGroup;
-                Page::redirect("home1");
-            } else {
-                // Controllo user simulation - SuperUser
-                if ((isset($_POST['userSimSelect']) && $_POST['userSimSelect'] > 0) || (isset($_POST['form_changeuser']) && ! empty($_POST['form_changeuser']) && $_POST["form_changeuser"] > 0)) {
-                    $simulatedUserId = $_POST['userSimSelect'] > 0 ? $_POST['userSimSelect'] : $_POST["form_changeuser"];
-                    User::logUser($simulatedUserId);
-                    $sql = "SELECT g.nome FROM utenti u JOIN utenti_has_gruppi ug USING(id_utente) LEFT JOIN utenti_gruppi g USING (id_gruppo_utente) WHERE id_utente = ?";
-                    $simulatedUserGroup = Database::getField($sql, array(
-                        $simulatedUserId
-                    ));
-                    $_SESSION['user']['simulation']['id'] = $simulatedUserId;
-                    $_SESSION['user']['simulation']['gruppo'] = $simulatedUserGroup;
-                    $_SESSION['user']['simulation']['superuser'] = true;
-                }
-            }
-
-            User::online();
-
-            User::hasPermission();
-
-            if (User::isReadOnly())
-                $page->addWarning("Accesso in sola lettura, nessuna modifica è concessa.");
-        }
-    }
-
-    /**
-     * Imposta nella variabile Config::$config, il contenuto della tabella config
-     */
-    static function setConfig($load = false)
-    {
-        if ($load || empty($_SESSION["configuration"]) || in_array(User::$pg, Config::$openPage)) {
-            Config::$config = null;
-
-            $config = Database::getRow("SELECT * FROM config LIMIT 1");
-            if (count($config) > 0) {
-                $_SESSION["configuration"]["config"] = $config;
-                Config::$config = $config;
-            }
-        } else {
-            Config::$config = $_SESSION["configuration"]["config"];
-        }
-    }
-
-    /**
-     * Restituisce il nome dello studio
-     *
-     * @return string
-     */
-    static function getStudio()
-    {
-        return $_SESSION["denominazione"];
-    }
-
     /**
      * Verifica se si hanno i permessi per la pagina
      */
     static function hasPermission()
     {
-        if (in_array(User::$pg, Config::$openPage))
+        if (in_array(App::$pg, Config::$openPage))
             return;
 
-        $apage = explode("/", User::$pg);
+        $apage = explode("/", App::$pg);
         $base = $apage[0];
 
         if (! User::isUserLogged() && $base != "public") {
@@ -146,91 +38,10 @@ class User
         }
 
         $has = true;
-        $has = Permission::hasPrivileges(User::$pg);
+        $has = Permission::hasPrivileges(App::$pg);
 
         # if ($has === false)
         # Page::redirect("home", "", true, "<h3 class='text-center'>Non si è autorizzati a visualizzare questa risorsa.</h3>", "danger");
-    }
-
-    /**
-     * Restituisce l'HTML che permette al superuser di selezionare
-     * l'utente da simulare in modalità User Simulation
-     *
-     * @return string
-     */
-    static function userSimulationSuperUserHtml()
-    {
-        if (! User::isSuperUser() && ! $_SESSION['user']['simulation']['superuser'])
-            return "";
-
-        $sql = "SELECT u.*,g.nome AS gruppo,
-		CONCAT(IFNULL(u.cognome,''), ' ',IFNULL(u.nome,'')) AS username
-		FROM utenti u
-		JOIN utenti_has_gruppi ug USING(id_utente)
-		JOIN utenti_gruppi g USING(id_gruppo_utente)
-		WHERE u.record_attivo=1 
-		GROUP BY id_utente
-		ORDER BY g.nome, username";
-
-        $utenti = Database::getRows($sql);
-        if (count($utenti) == 0)
-            return;
-
-        $gr = "";
-        $out = '<li class="dropdown">
-							<a class="dropdown-toggle"	data-toggle="dropdown" href="#">
-								<i class="fas fa-users fa-2x"></i>
-								<i class="fas fa-caret-down"></i>
-							</a>
-						   <form id="userSimFormSuper" method="post" style="display:inline;">
-				   			<input type="hidden" name="userSimSelect" id="userSimSelect"/>
-							</form>
-							<ul class="dropdown-menu scrollable-menu" role="menu">';
-        foreach ($utenti as $g) {
-            if ($gr != $g["gruppo"]) {
-                $out .= '<li class=\'active\'><a href="#"><strong>' . strtoupper($g["gruppo"]) . '</strong></a></li>';
-                $gr = $g["gruppo"];
-            }
-            $class = null;
-            if (isset($_SESSION['user']['simulation']))
-                $class = $_SESSION['user']['simulation']['id'] == $g["id_utente"] ? "active" : "";
-
-            $out .= '<li><a class="' . $class . '" href="#" onclick="$(\'#userSimSelect\').val(\'' . $g["id_utente"] . '\'); $(\'#userSimFormSuper\').submit()"><i class="fas fa-user fa"></i> ' . $g["username"] . '</a></li>';
-        }
-        $out .= "</ul></li>";
-
-        return $out;
-    }
-
-    /**
-     * Restituisce l'HTML che permette all'utente di cambiare profilo
-     *
-     * @return string
-     */
-    static function userSimulationUserProfiloHtml()
-    {
-        if (! User::isUserLogged())
-            return "";
-        $gruppi = $_SESSION['user']['gruppi'];
-        if (count($gruppi) == 1)
-            return "";
-
-        $out = '<li class="dropdown">
-							<a class="dropdown-toggle"	data-toggle="dropdown" href="#">
-								<i class="fas fa-refresh fa-2x"></i>
-								<i class="fas fa-caret-down"></i>
-							</a>
-						   <form id="userSimForm" method="post" style="display:inline;">
-				   			<input type="hidden" name="userSimSelectGruppo" id="userSimSelectGruppo"/>
-							</form>
-							<ul class="dropdown-menu dropdown-user">';
-        foreach ($gruppi as $g) {
-            $class = $_SESSION['user']['gruppo'] == $g["gruppo"] ? "active" : "";
-            $out .= '<li><a class="' . $class . '" href="#" onclick="$(\'#userSimSelectGruppo\').val(\'' . $g["gruppo"] . '\'); $(\'#userSimForm\').submit()"><i class="fas fa-user fa-2x"></i>' . $g["gruppo_desc"] . '</a></li>';
-        }
-        $out .= "</ul></li>";
-
-        return $out;
     }
 
     /**
@@ -242,12 +53,15 @@ class User
 
             $root = Menu::findRootNode();
 
-            Menu::appendToNode($root, "user", "Il mio profilo", "Profilo utente", "I dati del mio profilo", "", "", [
+            $idUtente = User::getLoggedUserId();
+            Menu::appendToNode($root, "user/$idUtente", Language::get("Profilo utente"), Language::get("Gestione dei dati del profilo utente"), Language::get("Gestione dei dati del profilo utente"), "", "", [
                 "icon" => "user",
-                "icon-color" => "purple"
+                "icon-color" => "primary"
             ]);
-
-            Menu::appendToNode($root, "home", "Home", "Home", "Pagina iniziale", "", "", [
+            Menu::hideById("user/$idUtente");
+            
+            
+            Menu::appendToNode($root, "home", Language::get("Home"), Language::get("Pagina iniziale"), Language::get("Pagina iniziale"), "", "", [
                 "icon" => "tachometer-alt",
                 "icon-color" => "red"
             ]);
@@ -256,32 +70,31 @@ class User
                 case "superuser":
                 case "amministratore":
 
-                    $admin = Menu::appendToNode($root, "admin", "Pannello di controllo", "Sezione riservata al superuser", "", "", "", "cogs");
+                    $admin = Menu::appendToNode($root, "admin", Language::get("Pannello di controllo"), Language::get("Sezione riservata al superuser"), "", "", "", "cogs");
 
                     if (User::isSuperUser()) {
-                        Menu::appendToNode($admin, "admin/configurazione", "Configurazione", "Configurazione parametri di sistema", "Configurazione parametri di sistema", "", "", "cog");
-                        Menu::appendToNode($admin, "admin/avvisi", "Avvisi/News", "Sezione relativa alla gestione degli avvisi da inserire sul portale.", "", "", "", "newspaper");
+                        Menu::appendToNode($admin, "admin/configurazione", Language::get("Configurazione"), Language::get("Configurazione parametri di sistema"), Language::get("Configurazione parametri di sistema"), "", "", "cog");
+                        Menu::appendToNode($admin, "admin/avvisi", Language::get("Avvisi/News"), Language::get("Sezione relativa alla gestione degli avvisi da inserire sul portale"), "", "", "", "newspaper");
 
-                        $NodePermessi = Menu::appendToNode($admin, "admin/permessi", "Servizi e permessi", "Gestione servizi, permessi ed abilitazione profili.", "", "", "", "puzzle-piece");
-                        Menu::appendToNode($NodePermessi, "admin/permessi/servizi", "Servizi", "Gestione servizi disponibili", "", "", "", "bars");
-                        Menu::appendToNode($NodePermessi, "admin/permessi/gruppi", "Gruppi", "Gestione gruppi", "", "", "", "users");
-                        Menu::appendToNode($NodePermessi, "admin/permessi/associaservizi", "Associa Servizi|Gruppi", "Abilitare o disabilitare i servizi per i gruppi", "", "", "", "angle-double-right");
-                        Menu::appendToNode($NodePermessi, "admin/permessi/pagine", "Pagine", "Gestione permessi singole pagine", "", "", "", "file");
+                        $NodePermessi = Menu::appendToNode($admin, "admin/permessi", Language::get("Servizi e permessi"), Language::get("Gestione servizi, permessi ed abilitazione profili"), "", "", "", "puzzle-piece");
+                        Menu::appendToNode($NodePermessi, "admin/permessi/servizi", Language::get("Servizi"), Language::get("Gestione servizi disponibili"), "", "", "", "bars");
+                        Menu::appendToNode($NodePermessi, "admin/permessi/gruppi", Language::get("Gruppi"), Language::get("Gestione gruppi/ruoli"), "", "", "", "users");
+                        Menu::appendToNode($NodePermessi, "admin/permessi/associaservizi", Language::get("Associa Servizi|Gruppi"), Language::get("Abilitare o disabilitare i servizi per i gruppi"), "", "", "", "angle-double-right");
+                        //Menu::appendToNode($NodePermessi, "admin/permessi/pagine", Language::get("Pagine"), Language::get("Gestione permessi singole pagine"), "", "", "", "file");
 
-                        $aiuto = Menu::appendToNode($admin, "admin/help", "Help/Faq", "Gestione Help in linea e Faq", "", "", "", "question");
-                        Menu::appendToNode($aiuto, "admin/help/pagine", "Help pagine", "Gestione help in linea per singola pagina", "", "", "", "question");
-                        Menu::appendToNode($aiuto, "admin/help/faq", "Gestisci Faq", "Gestione delle Faq", "", "", "", "question");
-
-                        Menu::appendToNode($admin, "admin/testfatturaelettronica", "Test fattura", "Test fattura elettronica", "Pagina di test servizio fattura24", "", "", "cog");
+                        //$aiuto = Menu::appendToNode($admin, "admin/help", "Help/Faq", "Gestione Help in linea e Faq", "", "", "", "question");
+                        //Menu::appendToNode($aiuto, "admin/help/pagine", "Help pagine", "Gestione help in linea per singola pagina", "", "", "", "question");
+                        //Menu::appendToNode($aiuto, "admin/help/faq", "Gestisci Faq", "Gestione delle Faq", "", "", "", "question");
                     }
 
-                    Menu::appendToNode($admin, "admin/utenti", "Gestione utenti", "Gestione completa degli utenti del sistema", "", "", "", "user-plus");
-                    Menu::appendToNode($admin, "admin/utenti/online", "Utenti online", "Elenco degli utenti on line", "", "", "", "users");
+                    Menu::appendToNode($admin, "admin/utenti", Language::get("Gestione utenti"), Language::get("Gestione completa degli utenti del sistema"), "", "", "", "user-plus");
+                    Menu::appendToNode($admin, "admin/utenti/online", Language::get("Utenti online"), Language::get("Elenco degli utenti on line"), "", "", "", "users");
 
-                    Menu::appendToNode($admin, "admin/testmail", "Test email", "Testare l'invio delle email", "Testare l'invio delle email", "", "", "envelope");
+                    Menu::appendToNode($admin, "admin/testmail", Language::get("Test email"), Language::get("Testare l'invio delle email"), Language::get("Testare l'invio delle email"), "", "", "envelope");
 
-                    Menu::appendToNode($admin, "admin/editor", "Editor", "Editor file", "Editor file", "", "", "edit");
+                    //Menu::appendToNode($admin, "admin/editor", "Editor", "Editor file", "Editor file", "", "", "edit");
 
+                    
                     $help = Menu::appendToNode($root, "public/aiuto", "Aiuto", "Aiuto", "Sezione di aiuto", "", "", [
                         "icon" => "question-circle",
                         "icon-color" => "blue"
@@ -301,14 +114,13 @@ class User
 
                     break;
 
-                case "operatore":
-                    Menu::appendToNode($root, "suoli", "DB Suoli", "Procedura di allineamento del db suoli", "Procedura di allineamento del db suoli", "", "", "attach");
-                    break;
                 default:
                     break;
             }
+
+           //Menu::hideById("user");
         }
-        # Menu::hideById("user");
+
         # Menu::hideById("public/aiuto");
         # Menu::hideById("admin/help");
     }
@@ -416,6 +228,7 @@ class User
 
         $tot = count($res);
         if ($tot > 0) {
+
             $gruppi = array();
             foreach ($rs_gruppi as $row_gruppo) {
                 $gruppi[] = array(
@@ -439,7 +252,8 @@ class User
                 'gruppi' => $gruppi,
                 'readonly' => $res['readonly'],
                 'nazione' => $res['nazione'],
-                'email' => $res['email']
+                'email' => $res['email'],
+                'heartbeat' => time()
             );
 
             $_SESSION['denominazione'] = $res[0]['denominazione'];
@@ -507,7 +321,7 @@ class User
         $sql = "SELECT DISTINCT id_utente
 					FROM	utenti u 
                     JOIN    utenti_has_gruppi ug USING(id_utente)
-					WHERE	BINARY u.username = ?
+					WHERE	(BINARY u.username = ? OR BINARY u.email = ?)
 					AND		BINARY u.password = ?
 					AND		record_attivo = 1
 					$sqlSuper";
@@ -516,6 +330,7 @@ class User
         $passCrypt = User::saltPassword($password);
 
         $userId = Database::getField($sql, array(
+            trim($username),
             trim($username),
             $passCrypt
         ));
@@ -528,51 +343,6 @@ class User
     }
 
     /**
-     * Setta i servizi di default
-     *
-     * @param array $servizi
-     */
-    static function setServiziDefault($servizi = array())
-    {
-        User::$servizi = $servizi;
-    }
-
-    /**
-     * Carica per l'utente i servizi di default
-     * ad esempio Notifica, Pap
-     *
-     * @param int $idUtente
-     *            [optional]
-     */
-    static function associaServiziDefault($idUtente)
-    {
-        $default = ! empty(User::$servizi) ? User::$servizi : Servizi::getServiziDefault();
-        $res = true;
-        // TOTO: capire come mai arriva default vuoto
-        foreach ($default as $d) {
-            $Servizio = Servizi::get("servizio", $d);
-            $idServizio = $Servizio['id_servizio'];
-            $res = $res && Servizi::addServizioUtente($idUtente, $idServizio);
-        }
-        return $res;
-    }
-
-    static function createRandomPassword()
-    {
-        $chars = "abcdefghijkmnopqrstuvwxyz023456789";
-        srand((float) microtime() * 1000000);
-        $i = 0;
-        $pass = '';
-        while ($i <= 7) {
-            $num = rand() % 33;
-            $tmp = substr($chars, $num, 1);
-            $pass = $pass . $tmp;
-            $i ++;
-        }
-        return $pass;
-    }
-
-    /**
      * Hashing della password con salt
      *
      * @param string $clearPassword
@@ -581,7 +351,7 @@ class User
      */
     static function saltPassword($clearPassword)
     {
-        return sha1(Config::$passwordSalt . $clearPassword);
+        return sha1(Environ::get('APP_KEY') . $clearPassword);
     }
 
     /**
@@ -620,19 +390,6 @@ class User
     static function isReadOnly()
     {
         return $_SESSION['user']['readonly'] == 1;
-    }
-
-    /**
-     * Ritoran un'array con le tipologie di utenti
-     * Tecnico, Titolare, Altro ...
-     *
-     * @return array
-     */
-    static function getTipologia()
-    {
-        $sql = "SELECT id_tipologia_utente, nome FROM utenti_tipologia";
-        $data = Database::getRows($sql, null, PDO::FETCH_KEY_PAIR);
-        return $data;
     }
 
     /**
@@ -678,22 +435,22 @@ class User
         switch ($stato) {
             case "login":
                 $tm = date("Y-m-d H:i:s");
-                Database::query("DELETE FROM utenti_online WHERE id_utente=? AND ip=?", array(
+                Database::delete("DELETE FROM utenti_online WHERE id_utente=? AND ip=?", array(
                     User::getLoggedUserId(),
                     User::$ip
                 ));
-                Database::query("INSERT INTO utenti_online (id,id_utente,ip,tm,page,url) VALUES(?,?,?,?,?,?)", array(
+                Database::insert("INSERT INTO utenti_online (id,id_utente,ip,tm,page,url) VALUES(?,?,?,?,?,?)", array(
                     session_id(),
                     User::getLoggedUserId(),
                     User::$ip,
                     $tm,
-                    User::$pg,
+                    App::$pg,
                     User::$url
                 ));
 
                 break;
             case "logout":
-                Database::query("UPDATE utenti_online SET status=0 WHERE id_utente=? AND ip=?", array(
+                Database::update("UPDATE  utenti_online SET status=0 WHERE id_utente=? AND ip=?", array(
                     User::getLoggedUserId(),
                     User::$ip
                 ));
@@ -704,8 +461,8 @@ class User
                 if ($_SERVER["QUERY_STRING"] != "")
                     User::$url .= "?" . $_SERVER["QUERY_STRING"];
                 if (isset($_SESSION['user']))
-                    Database::query("UPDATE utenti_online SET tm=NOW(), status=1, page=?, url=? WHERE id_utente=? AND ip=?", array(
-                        User::$pg,
+                    Database::update("UPDATE  utenti_online SET tm=NOW(), status=1, page=?, url=? WHERE id_utente=? AND ip=?", array(
+                        App::$pg,
                         User::$url,
                         User::getLoggedUserId(),
                         User::$ip
@@ -716,27 +473,10 @@ class User
                 $page = Page::getInstance();
                 if (User::isSuperUser() && $page->alias == "admin/utenti/online") {
                     $gap = 5; // tempo di attesa in minuti
-                    Database::query("UPDATE utenti_online SET status=0 WHERE tm < DATE_SUB(NOW(), INTERVAL $gap MINUTE);");
+                    Database::update("UPDATE  utenti_online SET status=0 WHERE tm < DATE_SUB(NOW(), INTERVAL $gap MINUTE);");
                 }
 
                 break;
         }
     }
-
-    /**
-     * Creo il menù relativo alle pagine aperte, senza login
-     * Le voci sono registrate in una tabella "pubblicazioni"
-     */
-    static function pubblicazioni()
-    {
-        $pubb = Database::getRows("SELECT * FROM pubblicazioni");
-
-        if (count($pubb) > 0) {
-            $pubbnode = Menu::findNodeById("public");
-            foreach ($pubb as $purl)
-                Menu::appendToNode($pubbnode, "public/" . $purl["url"], $purl["titolo"], $purl["descrizione"], "", "", "", "file");
-        }
-    }
-
-   
 }

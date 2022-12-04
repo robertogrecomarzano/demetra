@@ -112,12 +112,11 @@ body.texture {
 		style="opacity: 1; margin-left: 0px;">
 		<div class="page-error">
 			<h1 class="number text-center">404</h1>
-			<h2 class="description text-center">Pagina non trovata</h2>
-			<h5 class="subdescription text-center">Spiacenti, ma la pagina
-				cercata non esiste.</h5>
+			<h2 class="description text-center"><?php echo $_GET["msg"];?></h2>
+			<h5 class="subdescription text-center">Spiacenti, ma la pagina cercata non esiste.</h5>
 		</div>
-		<div class="text-center copy">Probabilmente è stato inserito un
-			indirizzo pagina errato.</div>
+		
+			
 	</div>
 </body>
 </html>

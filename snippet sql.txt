@@ -1,0 +1,47 @@
+#DB::enableQueryLog();
+#var_dump(DB::table('help')->where("alias", "=", "suoli")->first());
+#var_dump(DB::getQueryLog());
+/*
+ *
+ *
+ * require "bootstrap.php";
+ *
+ * use App\Models\Utente;
+ * use Illuminate\Database\Capsule\Manager as DB;
+ * DB::enableQueryLog();
+ * echo DB::table('users')->toSql();
+ * /*
+ * $user = Utente::Create([
+ * 'name' => "Roberto Greco",
+ * 'email' => "grecomarzano@libero.it",
+ * 'password' => password_hash("ahmedkhan", PASSWORD_BCRYPT)
+ * ]);
+ *
+ * print_r($user->todo()->create([
+ *
+ * 'todo' => "Working with Eloquent Without PHP",
+ *
+ * 'category' => "eloquent",
+ *
+ * 'description' => "Testing the work using eloquent without laravel"
+ * ]));
+ *
+ * $user = Utente::find(19)->toArray();
+ *
+ * var_dump($user);
+ *
+ * /*
+ * DB::table('users')->insert([
+ * 'name' => "Roberto Greco",
+ * 'email' => "grecomarzano4@libero.it",
+ * 'password' => password_hash("ahmedkhan", PASSWORD_BCRYPT)
+ * ]);
+ *
+ *
+ * $users = DB::table('users')->get();
+ *
+ * foreach ($users as $user)
+ * echo $user->name;
+ *
+ * // var_dump(DB::getQueryLog());
+ */

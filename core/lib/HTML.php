@@ -28,6 +28,9 @@ class HTML
      */
     static function HTMLAttribute($key, $value)
     {
+        if(is_bool($value))
+            return $key;
+        else
         return $key . "=\"" . HTML::HTMLAttributeValue($value) . "\"";
     }
 
@@ -51,6 +54,7 @@ class HTML
     {
         $tagOpener = "<";
         $jargs = "";
+        
         if (is_array($arguments)) {
             $args = array_map(array(
                 "App\Core\Lib\HTML",
@@ -62,6 +66,7 @@ class HTML
             $jargs = " " . $arguments;
         }
 
+        
         if (! empty($content) || $alwaysClosingTag) {
             $tagClosed = "</" . $tag . ">";
             $tagCloser = ">";

@@ -2,8 +2,7 @@
 namespace App\Core\Lib;
 
 use App\Core\Config;
-use App\Core\Classes\Istat;
-use App\Core\Classes\User;
+use App\Core\User;
 use Exception;
 use Smarty;
 use Smarty_Internal_Template;
@@ -13,6 +12,7 @@ use Smarty_Internal_Template;
  */
 class Form
 {
+
     /**
      * Funzione di help per le traduzioni basate sulla medesima tabella
      *
@@ -389,7 +389,7 @@ class Form
     static public function select($params, $smarty = null)
     {
         $args = Form::processStandardParams($params);
-        $args["class"] = ! isset($args["class"]) ? "form-control" : "";
+
         $options = "";
 
         if (isset($params["src"]) && empty($params["src"]) && $params["data-lockup"]) {
@@ -405,7 +405,7 @@ class Form
         }
 
         if ((isset($params['first']) && $params["first"]) || empty($params["src"]))
-            $options .= "<option />";
+            $options .= "<mwc-list-item></mwc-list-item>";
 
         $out = HTML::tag("select", $args, $options);
 
@@ -463,13 +463,15 @@ class Form
                         if (isset($params['label']))
                             $v = $v[$params['label']];
                     }
-                    $options .= HTML::tag("option", $targs, $v);
+                    $options .= HTML::tag("mwc-list-item", $targs, $v);
                 }
 
                 if (isset($params['writable']) && ! $params['writable'])
                     $args['disabled'] = "disabled";
 
-                $out = HTML::tag("select", $args, $options);
+                $args["class"] = ! isset($args["class"]) ? "" : $args["class"];
+                $args["label"] = $params["placeholder"];
+                $out = HTML::tag("mwc-select", $args, $options);
             }
         }
         return $out;
@@ -503,6 +505,7 @@ class Form
         $args = Form::processStandardParams($params);
         $args["type"] = "checkbox";
         $args["value"] = 1;
+        $args["class"] = "form-check-input";
 
         if (isset($_POST[$args['name']]) && $_POST[$args['name']] == 1)
             $args["checked"] = "checked";
@@ -512,27 +515,18 @@ class Form
 
         $tag = HTML::tag("input", $args);
 
-        if ($params["btn-style"]) {
+        if (empty($params['label']))
+            $params['label'] = "&nbsp;";
 
-            if (empty($params['label']))
-                $params['label'] = "&nbsp;";
+        $label = HTML::tag("label", [
+            "class" => "form-check-label",
+            "for" => $args["id"]
+        ], $params['label']);
 
-            $active = $args["checked"] == "checked" ? "active" : "";
-
-            return HTML::tag("div", array(
-                "class" => "btn-group-toggle",
-                "data-toggle" => "buttons"
-            ), "<label class='btn btn-outline-primary $active'>" . $tag . $params['label'] . "</label>");
-        } else {
-            if (empty($params['label']))
-                $params['label'] = "&nbsp;";
-
-            $tag = HTML::tag("label", array(), $tag . "<span class='label-text'>" . $params['label'] . "</span>");
-
-            return HTML::tag("div", array(
-                "class" => "form-check"
-            ), $tag);
-        }
+        $switch = $params["switch"] ? " form-switch" : null;
+        return HTML::tag("div", array(
+            "class" => "form-check$switch"
+        ), $tag . $label);
     }
 
     /**
@@ -576,6 +570,7 @@ class Form
 
                 $targs = array_merge($targs, array(
                     "type" => "checkbox",
+                    "class" => "form-check-input",
                     "id" => $id,
                     "value" => $k,
                     "name" => $args['name'] . "[$id]",
@@ -595,11 +590,14 @@ class Form
 
                 $tag = HTML::tag("input", $targs);
 
-                $tag = HTML::tag("label", array(), $tag . "<span class='label-text'>" . $v . "</span>");
+                $label = HTML::tag("label", [
+                    "class" => "form-check-label",
+                    "for" => $id
+                ], $v);
 
                 $tag = HTML::tag("div", array(
                     "class" => "form-check"
-                ), $tag);
+                ), $tag . $label);
 
                 $cols = $params["cols"];
                 switch ($cols) {
@@ -781,10 +779,6 @@ class Form
     static public function textbox($params, $smarty = null)
     {
         $args = Form::processStandardParams($params);
-        $args["type"] = isset($params["type"]) ? $params["type"] : "textbox";
-        $args["class"] = ! isset($args["class"]) ? "form-control" : $args["class"];
-        if (isset($params["type"]))
-            $args["type"] = $params["type"];
 
         if (! empty($args["data-basename"]) && ! empty($args["data-key"])) {
             if (isset($_POST[$args["data-basename"]][$args["data-key"]]))
@@ -808,7 +802,35 @@ class Form
         if (isset($params['writable']) && ! $params['writable'])
             $args['disabled'] = "disabled";
 
-        $tag = HTML::tag("input", $args);
+        if ($args["mwc"]) {
+            $args["class"] = ! isset($args["class"]) ? "w-100" : $args["class"];
+            if ($args["outlined"])
+                $args["outlined"] = "outlined";
+            $tag = HTML::tag("mwc-textfield", $args);
+        } elseif ($args["mdc"]) {
+
+            $args["type"] = isset($params["type"]) ? $params["type"] : "textbox";
+            $args["class"] = "mdc-text-field__input";
+            $args["aria-labelledby"] = $args["id"];
+
+            $input = HTML::tag("input", $args);
+            $img = isset($args["img"]) ? '<i class="material-icons mdc-text-field__icon mdc-text-field__icon--trailing" tabindex="0" role="button">' . $args["img"] . '</i>' : "";
+            $tag = '<label class="mdc-text-field mdc-text-field--outlined mdc-text-field--with-trailing-icon w-100">
+            <span class="mdc-notched-outline">
+            <span class="mdc-notched-outline__leading"></span>
+            <span class="mdc-notched-outline__notch">
+            <span class="mdc-floating-label">' . $args["placeholder"] . '</span>
+            </span>
+            <span class="mdc-notched-outline__trailing"></span>
+            </span>
+            ' . $input . $img . '
+            </label>';
+        } else {
+            $args["type"] = isset($params["type"]) ? $params["type"] : "textbox";
+            $args["class"] = ! isset($args["class"]) ? "form-control" : $args["class"];
+
+            $tag = HTML::tag("input", $args);
+        }
         return $tag;
     }
 
@@ -969,7 +991,7 @@ class Form
         $id = $params['id'];
         $js = "form_mod";
         $img = "edit";
-        $class = "btn btn-warning btn-xs";
+        $class = "btn btn-warning";
 
         $params["type"] = "button";
 
@@ -991,14 +1013,94 @@ class Form
 
         $class = isset($params["class"]) ? $params["class"] : $class;
 
-        $img_style = (isset($params['data-img_style']) && ! empty($params['data-img_style'])) ? $params['data-img_style'] : "fa";
+        return HTML::tag("button", array(
+            "type" => $params["type"],
+            "title" => $title,
+            "onclick" => "$js(this,$id);",
+            "class" => $class
+        ), "<i class='leading-icon material-icons'>$img</i> " . $txt);
+    }
+
+    /**
+     *
+     * @param array $params
+     * @param Smarty_Internal_Template $smarty
+     * @return string
+     */
+    static function store($params, $smarty = null)
+    {
+        if (isset($params['writable']) && ! $params['writable'])
+            return;
+
+        if (User::isReadOnly() && ! $params["read-allowed"])
+            return;
+
+        $p = Page::getInstance();
+        if ($p::$write === false)
+            return;
+
+        $id = $params['id'];
+        $js = "form_insert";
+
+        $txt = (isset($params['value']) && ! empty($params['value'])) ? $params['value'] : "Conferma";
+        $title = $txt;
+        $img = "check";
+        $class = "btn btn-primary";
+
+        $params["type"] = "button";
+
+        if (! $params["text"])
+            $txt = null;
+
+        $class = isset($params["class"]) ? $params["class"] : $class;
 
         return HTML::tag("button", array(
             "type" => $params["type"],
             "title" => $title,
             "onclick" => "$js(this,$id);",
             "class" => $class
-        ), "<i class='$img_style fa-$img'></i> " . $txt);
+        ), "<i class='leading-icon material-icons'>$img</i> " . $txt);
+    }
+
+    /**
+     *
+     * @param array $params
+     * @param Smarty_Internal_Template $smarty
+     * @return string
+     */
+    static function update($params, $smarty = null)
+    {
+        if (isset($params['writable']) && ! $params['writable'])
+            return;
+
+        if (User::isReadOnly() && ! $params["read-allowed"])
+            return;
+
+        $p = Page::getInstance();
+        if ($p::$write === false)
+            return;
+
+        $id = $params['id'];
+        $js = "form_update";
+
+        $txt = (isset($params['value']) && ! empty($params['value'])) ? $params['value'] : "Modifica";
+        $title = $txt;
+        $img = "save";
+        $class = "btn btn-primary";
+
+        $params["type"] = "button";
+
+        if (! $params["text"])
+            $txt = null;
+
+        $class = isset($params["class"]) ? $params["class"] : $class;
+
+        return HTML::tag("button", array(
+            "type" => $params["type"],
+            "title" => $title,
+            "onclick" => "$js(this,$id);",
+            "class" => $class
+        ), "<i class='leading-icon material-icons'>$img</i> " . $txt);
     }
 
     /**
@@ -1029,8 +1131,8 @@ class Form
             "type" => "button",
             "title" => $title,
             "onclick" => "form_annulla(this,'$id');",
-            "class" => "btn btn-default"
-        ), "<i class='fas fa-undo'></i> " . $txt);
+            "class" => "btn btn-light"
+        ), "<i class='leading-icon material-icons fas fa-undo'></i> " . $txt);
     }
 
     /**
@@ -1054,10 +1156,12 @@ class Form
         $id = $params['id'];
         $txt = (isset($params['value']) && ! empty($params['value'])) ? $params['value'] : "Elimina";
         $title = (isset($args['title']) && ! empty($args['title'])) ? $args['title'] : $txt;
-        $class = isset($params["class"]) ? $params["class"] : "btn btn-danger btn-xs";
+        $class = isset($params["class"]) ? $params["class"] : "btn btn-danger";
 
         if (! $params["text"])
             $txt = null;
+
+        $icon = (isset($params['leading_icon']) && ! empty($params['leading_icon'])) ? "<i class='leading-icon material-icons'>delete</i>" : "<i class='material-icons'>delete</i>";
 
         return HTML::tag("button", array(
             "type" => "button",
@@ -1065,7 +1169,7 @@ class Form
             "onclick" => "form_del(this,$id);",
             "class" => $class,
             "data-id" => $id
-        ), "<i class='fas fa-trash'></i> " . $txt);
+        ), $icon . $txt);
     }
 
     /**
@@ -1090,14 +1194,14 @@ class Form
 
         $txt = (isset($params['value']) && ! empty($params['value'])) ? $params['value'] : "Salva";
 
-        $class = isset($params["class"]) ? $params["class"] : "btn btn-default";
+        $class = isset($params["class"]) ? $params["class"] : "btn btn-light";
 
         return HTML::tag("button", array(
             "type" => "button",
             "title" => $txt,
             "onclick" => $js,
             "class" => $class
-        ), "<i class='fas fa-plus'></i> " . $txt);
+        ), "<i class='leading-icon material-icons'>add</i> " . $txt);
     }
 
     /**
@@ -1131,7 +1235,38 @@ class Form
             "title" => $txt,
             "onclick" => $js,
             "class" => $class
-        ), "<i class='fas fa-plus'></i> " . $txt);
+        ), "<i class='leading-icon material-icons'>check</i> " . $txt);
+    }
+
+    /**
+     *
+     * @param array $params
+     * @param Smarty_Internal_Template $smarty
+     * @return string
+     */
+    static function submit($params, $smarty = null)
+    {
+        if (isset($params['writable']) && ! $params['writable'])
+            return;
+
+        if (User::isReadOnly() && ! $params["read-allowed"])
+            return;
+
+        $p = Page::getInstance();
+        if ($p::$write === false)
+            return;
+
+        $params = Form::processStandardParams($params);
+        $txt = (isset($params['value']) && ! empty($params['value'])) ? $params['value'] : "Conferma";
+        $img = (isset($params['img']) && ! empty($params['img'])) ? $params['img'] : "check";
+        $js = (isset($params['onclick']) && ! empty($params['onclick'])) ? "event.preventDefault(); return " . $params['onclick'] : "javasccript:void(0);";
+
+        return HTML::tag("button", array_merge($params, array(
+            "type" => "submit",
+            "title" => $txt,
+            "class" => "btn btn-primary",
+            "onclick" => $js
+        )), "<i class='leading-icon material-icons'>$img</i> " . $txt);
     }
 
     /**
@@ -1156,14 +1291,13 @@ class Form
         $confirm = (isset($params['onclick']) && ! empty($params['onclick'])) ? $params['onclick'] : "form_confirm(this);";
         $txt = (isset($params['value']) && ! empty($params['value'])) ? $params['value'] : "Conferma";
         $img = (isset($params['img']) && ! empty($params['img'])) ? $params['img'] : "check";
-        $img_style = (isset($params['data-img_style']) && ! empty($params['data-img_style'])) ? $params['data-img_style'] : "fas";
 
         return HTML::tag("button", array_merge($params, array(
             "type" => "button",
             "title" => $txt,
             "onclick" => $confirm,
             "class" => "btn btn-primary"
-        )), "<i class='$img_style fa-$img'></i> " . $txt);
+        )), "<i class='leading-icon material-icons'>$img</i> " . $txt);
     }
 
     /**
@@ -1195,20 +1329,19 @@ class Form
         $title = (isset($args['title']) && ! empty($args['title'])) ? $args['title'] : $txt;
         $img = (isset($args['img']) && ! empty($args['img'])) ? $args['img'] : "check";
         $confirm = (isset($params['onclick']) && ! empty($params['onclick'])) ? $params['onclick'] : "form_confirm(this);";
-
-        $class = isset($args["class"]) ? $args["class"] : "btn btn-default";
+        $txt = $args["text"] ? $txt : "";
+        $icon = empty($txt) ? "<i class='material-icons'>$img</i>" : "<i class='leading-icon material-icons'>$img</i>";
+        $class = isset($args["class"]) ? $args["class"] : "btn btn-light";
 
         if ($params["text"] == false)
             $txt = null;
-
-        $img_style = (isset($params['data-img_style']) && ! empty($params['data-img_style'])) ? $params['data-img_style'] : "fas";
 
         return HTML::tag("button", array_merge($args, array(
             "type" => "button",
             "title" => $title,
             "onclick" => $confirm,
             "class" => $class
-        )), "<i class='$img_style fa-$img'></i> " . $txt);
+        )), $icon . $txt);
     }
 
     /**
@@ -1220,6 +1353,10 @@ class Form
             return;
 
         if (User::isReadOnly() && ! $params["read-allowed"])
+            return;
+
+        $p = Page::getInstance();
+        if ($p::$write === false)
             return;
 
         $args = Form::processStandardParams($params);
@@ -1235,7 +1372,7 @@ class Form
         $url .= $href;
 
         $img = (isset($args['img']) && ! empty($args['img'])) ? $args['img'] : null;
-        $img_style = (isset($params['data-img_style']) && ! empty($params['data-img_style'])) ? $params['data-img_style'] : "fas";
+
         if (! empty($target))
             $jsAction = "window.open('" . $url . "','$target')";
         else
@@ -1247,14 +1384,16 @@ class Form
             $js = $jsAction;
 
         $txt = $args["text"] ? $txt : "";
-        $class = isset($args["class"]) ? $args["class"] : "btn btn-default";
+        $icon = empty($txt) ? "<i class='material-icons'>$img</i>" : "<i class='leading-icon material-icons'>$img</i>";
+
+        $class = isset($args["class"]) ? $args["class"] : "btn btn-light";
 
         return HTML::tag("button", array(
             "type" => "button",
             "title" => trim(preg_replace('/\s\s+/', ' ', $title)),
             "onclick" => $js,
             "class" => $class
-        ), "<i class='$img_style fa-$img'></i> " . $txt);
+        ), $icon . $txt);
     }
 
     /**
@@ -1313,7 +1452,7 @@ class Form
      * @param array $mappings
      * @param array $other
      */
-    static function processAction(&$action, &$actionId, $table, $tablePk, $mappings, $other = array())
+    static function processAction($action, &$actionId, $table, $tablePk, $mappings, $other = array())
     {
         try {
 
@@ -1328,10 +1467,10 @@ class Form
                         $sql = "UPDATE $table SET record_attivo=0 WHERE $tablePk = ?";
                     else
                         $sql = "DELETE FROM $table WHERE $tablePk = ?";
-                    $res = Database::query($sql, array(
+                    $res = Database::delete($sql, array(
                         $actionId
                     ));
-                    unset($action);
+                    // unset($action);
                     if ($res) {
                         $page->addMessages("Eliminazione completata");
                         $return = $actionId;
@@ -1341,9 +1480,9 @@ class Form
                 case "add2":
                     $sql = "INSERT INTO $table SET " . Form::mappingsSql($mappings, $other);
                     $params = Form::mappingsPost($mappings, $other);
-                    $res = Database::query($sql, $params);
-                    $db = Database::getDb();
-                    $actionId = $db->lastInsertId();
+                    $res = Database::insert($sql, $params);
+
+                    $actionId = Database::getLastIsertId();
                     if ($res) {
                         $page->addMessages("Registrazione completata");
                         $return = $actionId;
@@ -1355,7 +1494,7 @@ class Form
                     $params = Form::mappingsPost($mappings, $other);
                     $params[] = $actionId;
 
-                    $res = Database::query($sql, $params);
+                    $res = Database::update($sql, $params);
                     if ($res)
                         $page->addMessages("Aggiornamento completato");
                     $return = $actionId;
@@ -1447,8 +1586,15 @@ class Form
      */
     static function form_open($params, $smarty = null)
     {
+        $page = Page::getInstance();
+        $currentPage = Config::$urlRoot . "/" . $page->alias;
+        $actionId = $page->getId();
+        if (is_numeric($actionId))
+            $currentPage .= "/" . $actionId;
+
+        $params["action"] = ! empty($params["action"]) ? $params["action"] : $currentPage;
         $args = Form::processStandardParams($params);
-        $args["method"] = "post";
+        $args["method"] = "POST";
         return HTML::tag("form", $args);
     }
 
@@ -1464,7 +1610,7 @@ class Form
         $page = Page::getInstance();
         $alias = $page->alias;
         $form_token = $page->token;
-        $action = $page->assigns["action"];
+        $action = $params["data-action"];
         $action_id = $page->assigns["pkValue"];
 
         $form_alias = Form::hidden(array(
@@ -1484,18 +1630,292 @@ class Form
             "value" => $action_id
         ));
 
-        return $form_alias . $form_action . $form_id . $form_token . "</form>";
+        $methodField = Form::hidden([
+            "iname" => "form_method",
+            "value" => empty($params["data-method"]) ? "POST" : $params["data-method"]
+        ]);
+        return $form_alias . $form_action . $form_id . $form_token . $methodField . "</form>";
     }
 
     /**
-     * Crea un Form da usare per le pagine con tabelle per inserire/modificare/eliminare record
-     * Include dinamicamente il file table.tpl o add.tpl a seconda se si è in visualizzazione o inserimento/modifica di un record
+     * Form per la gestione delle operazioni CRUD
      *
      * @param array $params
      * @param array $smarty
      * @return string
      */
     static function form_table($params, $smarty = null)
+    {
+        $args = Form::processStandardParams($params);
+
+        $src = $params["src"];
+        $rows = $src["rows"];
+
+        $fields = $src["fields"];
+        $pk = $src["pk"];
+
+        $title = isset($src["title"]) ? $src["title"] : "Registra una nuova riga";
+
+        $writable = isset($src["writable"]) ? $src["writable"] : true;
+        $add = isset($src["add"]) ? $src["add"] : true;
+        $delete = isset($src["delete"]) ? $src["delete"] : true;
+        $edit = isset($src["edit"]) ? $src["edit"] : true;
+        $clone = isset($src["clone"]) ? $src["clone"] : false;
+
+        $custom_template = $src["custom-template"];
+
+        $args["method"] = "post";
+        $args["action"] = $params["data-action"];
+
+        $page = Page::getInstance();
+        $alias = $page->alias;
+        $actionId = $page->getId();
+
+        switch ($params["view"]) {
+            case "index":
+                $btn = null;
+                if ($writable && $add)
+                    $btn = "<div class='btn btn-group'>" . self::link(array(
+                        "value" => $title,
+                        "text" => true,
+                        "img" => "visibility",
+                        "title" => $title,
+                        "class" => "btn btn-primary",
+                        "writable" => $writable,
+                        "href" => Config::$urlRoot . "/" . $alias . "/create"
+                    )) . "</div>";
+
+                if (! $custom_template) {
+                    $table = "";
+                    $rowsOut = "";
+
+                    $header = HTML::tag("th", array(), "&nbsp;");
+                    foreach ($fields as $field => $value) {
+                        if ($value["others"]["hidden"])
+                            continue;
+
+                        $header .= HTML::tag("th", array(), $value["label"]);
+                    }
+
+                    foreach ($rows as $row) {
+                        $rowOut = "";
+
+                        $btn_show = self::link(array(
+                            "text" => false,
+                            "id" => $row[$pk],
+                            "href" => Config::$urlRoot . "/" . $alias . "/" . $row[$pk],
+                            "writable" => true,
+                            "img" => 'visibility',
+                            "class" => "btn btn-primary"
+                        ));
+                        $btn_edit = self::link(array(
+                            "text" => false,
+                            "id" => $row[$pk],
+                            "href" => Config::$urlRoot . "/" . $alias . "/" . $row[$pk] . "/edit",
+                            "writable" => $writable && $edit,
+                            "img" => 'save',
+                            "class" => "btn btn-warning"
+                        ));
+
+                        $btn_clone = null;
+                        if ($clone && ! $row["is_clone"])
+                            $btn_clone = self::button(array(
+                                "text" => false,
+                                "id" => $row[$pk],
+                                "writable" => $writable,
+                                "onclick" => "form_clone(this,$row[$pk]);",
+                                "class" => "btn btn-secondary",
+                                "data-id" => $row[$pk],
+                                "img" => "content_copy",
+                                "title" => "Duplica"
+                            ));
+                        $methodFieldClone = Form::hidden([
+                            "iname" => "form_method",
+                            "value" => "POST"
+                        ]);
+                        $actionFieldClone = Form::hidden([
+                            "iname" => "form_action",
+                            "value" => "clone"
+                        ]);
+
+                        $form_token = $page->token;
+
+                        $args["action"] = Config::$urlRoot . "/" . $alias . "/" . $row[$pk];
+                        $args["style"] = "display:inline;";
+                        $cloneForm = HTML::tag("form", $args, $btn_clone . $form_token . $actionFieldClone . $methodFieldClone, true);
+
+                        $btn_delete = null;
+                        if ($delete)
+                            $btn_delete = self::delete(array(
+                                "text" => false,
+                                "id" => $row[$pk],
+                                "writable" => $writable
+                            ));
+                        $methodFieldDelete = Form::hidden([
+                            "iname" => "form_method",
+                            "value" => "DELETE"
+                        ]);
+
+                        $form_token = $page->token;
+
+                        $args["action"] = Config::$urlRoot . "/" . $alias . "/" . $row[$pk];
+                        $args["style"] = "display:inline;";
+                        $deleteForm = HTML::tag("form", $args, $btn_delete . $form_token . $methodFieldDelete, true);
+
+                        $rowOut .= HTML::tag("td", [], $btn_show . $btn_edit . $cloneForm . $deleteForm);
+
+                        foreach ($fields as $field => $value) {
+
+                            if ($value["others"]["hidden"])
+                                continue;
+
+                            switch ($value["type"]) {
+                                case "checkbox":
+                                case "radio":
+                                    $valore = $row[$field] ? "<i class='fas fa-check'></i>" : null;
+                                    break;
+                                case "link":
+                                    $valore = isset($value["value"]) ? $row[$value["value"]] : $row[$field];
+                                    $id_link = isset($value["others"]["link_value"]) ? $row[$value["others"]["link_value"]] : $row[$pk];
+                                    $href = $value["others"]["link"] . "/" . $id_link;
+                                    $target = isset($value["others"]["target"]) ? $value["others"]["target"] : "";
+                                    $valore = "<a href='$href' target='$target' class='btn btn-link'>$valore</a>";
+                                    break;
+                                default:
+                                    $valore = isset($value["value"]) ? $row[$value["value"]] : $row[$field];
+                                    break;
+                            }
+
+                            $rowOut .= HTML::tag("td", array(), $valore);
+                        }
+
+                        $rowOut = HTML::tag("tr", array(), $rowOut);
+
+                        $rowsOut .= $rowOut;
+                    }
+
+                    $header = HTML::tag("tr", array(), $header);
+                    $header = HTML::tag("thead", array(), $header);
+                    $table = HTML::tag("table", array(
+                        "class" => "table table-striped table-hover dataTable no-footer dtr-inline",
+                        "id" => $src["id"]
+                    ), $header . $rowsOut);
+                }
+
+                $content = $btn . $table;
+                return $content;
+
+                break;
+            case "create":
+
+                if ($custom_template && $writable) {
+                    $template = $page->getTemplateServerPath("create");
+                    $content = $page->tpl->fetch($template);
+                } else {
+
+                    $content = '<div class="row"><div class="col-md-8 mb-4"><table class="table table-striped mb-0"><tbody>';
+
+                    foreach ($fields as $field => $value) {
+                        if ($value["others"]["hidden"])
+                            continue;
+                        $others = $value["others"];
+                        $others["iname"] = $field;
+                        $content .= "<tr><td><strong>" . $value["label"] . "</strong></td><td><span>" . self::form_table_obj($value, $others) . "</span></td></tr>";
+                    }
+                    $content .= "</tbody></table></div>";
+
+                    $create_dropdown = $writable ? self::create_dropdown([
+                        "action" => $params["view"],
+                        "action_id" => $rows[$pk]
+                    ]) : null;
+
+                    $content .= '<div class="text-end">' . $create_dropdown . '</div>';
+                }
+
+                break;
+            case "edit":
+
+                if ($custom_template && $writable) {
+                    $template = $page->getTemplateServerPath("edit");
+                    $content = $page->tpl->fetch($template);
+                } else {
+
+                    $content = '<div class="row"><div class="col-md-8 mb-4"><table class="table table-striped mb-0"><tbody>';
+
+                    foreach ($fields as $field => $value) {
+                        if ($value["others"]["hidden"])
+                            continue;
+                        $others = $value["others"];
+                        $others["iname"] = $field;
+                        $content .= "<tr><td><strong>" . $value["label"] . "</strong></td><td><span>" . self::form_table_obj($value, $others) . "</span></td></tr>";
+                    }
+                    $content .= "</tbody></table></div>";
+
+                    $edit_dropdown = $writable ? self::edit_dropdown([
+                        "action" => $params["view"],
+                        "action_id" => $rows[$pk]
+                    ]) : null;
+
+                    $content .= '<div class="text-end">' . $edit_dropdown . '</div>';
+                }
+
+                break;
+
+            case "show":
+
+                if ($custom_template && $writable) {
+                    $template = $page->getTemplateServerPath("show");
+                    $content = $page->tpl->fetch($template);
+                } else {
+
+                    $content = '<div class="row"><div class="col-md-8 mb-4"><table class="table table-striped mb-0"><tbody>';
+
+                    foreach ($fields as $field => $value) {
+                        if ($value["others"]["hidden"])
+                            continue;
+                        $content .= "<tr><td><strong>" . $value["label"] . "</strong></td><td><span>" . $rows[$field] . "</span></td></tr>";
+                    }
+                    $content .= "</tbody></table></div>";
+
+                    $showdropdown = $writable ? self::show_dropdown([
+                        "action" => $params["view"],
+                        "action_id" => $rows[$pk]
+                    ]) : null;
+
+                    $content .= '<div class="text-end">' . $showdropdown . '</div>';
+                }
+
+                break;
+        }
+
+        $form_alias = Form::hidden(array(
+            "id" => "form_alias",
+            "name" => "form_alias",
+            "value" => $alias . "/" . $actionId
+        ));
+
+        $form_method = Form::hidden([
+            "iname" => "form_method"
+        ]);
+
+        $form_action = Form::hidden([
+            "iname" => "form_action"
+        ]);
+
+        $form_token = $page->token;
+
+        $args["action"] = Config::$urlRoot . "/" . $alias;
+        if (is_numeric($actionId))
+            $args["action"] .= "/" . $actionId;
+
+        return HTML::tag("form", $args, $content . $form_alias . $form_token . $form_method . $form_action, true);
+    }
+
+    /**
+     *
+     * @deprecated
+     */
+    static function form_table_v1($params, $smarty = null)
     {
         $args = Form::processStandardParams($params);
 
@@ -1556,12 +1976,14 @@ class Form
              */
             $btn = null;
             if (! $inline && ($writable && $add))
-                $btn = "<div class='btn btn-group'>" . self::add(array(
+                $btn = "<div class='btn btn-group'>" . self::link(array(
                     "value" => $title,
                     "text" => true,
+                    "img" => "plus",
                     "title" => $title,
                     "class" => "btn btn-primary",
-                    "writable" => $writable
+                    "writable" => $writable,
+                    "href" => Config::$urlRoot . "/" . $alias . "/create"
                 )) . "</div>";
 
             if ($custom_template && ! $inline) {
@@ -1582,6 +2004,12 @@ class Form
                         "id" => $row[$pk],
                         "writable" => $writable
                     ));
+                    $btn_edit = self::link(array(
+                        "text" => false,
+                        "id" => $row[$pk],
+                        "href" => Config::$urlRoot . "/" . $alias . "/" . $row[$pk] . "/edit",
+                        "writable" => $writable
+                    ));
                     $btn_delete = null;
                     if ($delete)
                         $btn_delete = self::delete(array(
@@ -1596,7 +2024,7 @@ class Form
                             "id" => $row[$pk],
                             "writable" => $writable,
                             "onclick" => "form_clone(this,$row[$pk]);",
-                            "class" => "btn btn-primary btn-xs",
+                            "class" => "btn btn-primary",
                             "data-id" => $row[$pk],
                             "img" => "clone",
                             "title" => "Duplica"
@@ -1746,6 +2174,7 @@ class Form
 
         $type = $value["type"];
 
+        unset($others["required"]);
         switch ($type) {
             case "label":
                 $obj = Html::tag("label", null, $value["value"]);
@@ -1786,27 +2215,332 @@ class Form
     static function add_edit($params, $smarty = null)
     {
         $page = Page::getInstance();
-        $actionId = $page->assigns["pkValue"];
-        $action = $page->assigns["action"];
-        $annulla = self::undo(array(
-            "text" => true
+        $actionId = $params["action_id"];
+
+        $annulla = self::link(array(
+            "text" => true,
+            "value" => "Annulla",
+            "img" => "undo",
+            "class" => "btn btn-light",
+            "href" => Config::$urlRoot . "/" . $page->alias
         ));
-        if ($actionId > 0 && ($action == 'mod' || $action == "mod2"))
-            $btn = self::edit(array(
-                "inline" => true,
-                "class" => "btn btn-primary",
-                "id" => $actionId
-            ));
 
-        if ($action == 'add' || $action == "add2")
-            $btn = self::add2(array(
-                "text" => true,
-                "class" => "btn btn-primary",
-                "onclick" => $params["onclick"],
-                "type" => $params["type"]
-            ));
+        switch ($params["action"]) {
+            case "create":
+                $btn = self::store(array(
+                    "text" => true,
+                    "class" => "btn btn-primary"
+                    # "onclick" => $params["onclick"],
+                    # "type" => $params["type"]
+                ));
+                break;
+            case "edit":
+                $btn = self::update(array(
+                    "text" => true,
+                    "inline" => true,
+                    "class" => "btn btn-primary",
+                    "id" => $actionId
+                ));
+                break;
+        }
+        /*
+         * if ($actionId > 0 && ($action == 'mod' || $action == "mod2"))
+         * $btn = self::edit(array(
+         * "inline" => true,
+         * "class" => "btn btn-primary",
+         * "id" => $actionId
+         * ));
+         *
+         * if ($action == 'add' || $action == "add2")
+         * $btn = self::add2(array(
+         * "text" => true,
+         * "class" => "btn btn-primary",
+         * "onclick" => $params["onclick"],
+         * "type" => $params["type"]
+         * ));
+         */
+        return $btn . " " . $annulla;
+    }
 
-        return $btn . $annulla;
+    /**
+     *
+     * @param array $param
+     * @param object $smarty
+     * @return string
+     */
+    static function add_dropdown($param, $smarty = null)
+    {
+        $btn = HTML::tag("button", [
+            "text" => true,
+            "title" => Language::get("Conferma"),
+            "class" => "btn btn-success dropdown-toggle mdc-ripple-upgraded",
+            "id" => "dropdownMenuButton",
+            "type" => "button",
+            "data-bs-toggle" => "dropdown",
+            "aria-expanded" => "false"
+        ], Language::get("Conferma") . '<i class="trailing-icon material-icons dropdown-caret">arrow_drop_down</i>');
+
+        $liSalva = HTML::tag("li", [], HTML::tag("button", [
+            "type" => "button",
+            "class" => "dropdown-item mdc-ripple-upgraded",
+            "onclick" => "form_insert(this);"
+        ], "Salva"));
+
+        $liSalvaPreview = HTML::tag("li", [], HTML::tag("button", [
+            "type" => "button",
+            "class" => "dropdown-item mdc-ripple-upgraded",
+            "onclick" => "form_insert_preview(this);"
+        ], "Salva e visualizza"));
+
+        $liSalvaNew = HTML::tag("li", [], HTML::tag("button", [
+            "type" => "button",
+            "class" => "dropdown-item mdc-ripple-upgraded",
+            "onclick" => "form_insert_new(this);"
+        ], "Salva e nuovo"));
+
+        $ul = HTML::tag("ul", [
+            "class" => "dropdown-menu",
+            "aria-labelledby" => "dropdownMenuButton"
+        ], $liSalva . $liSalvaPreview . $liSalvaNew);
+
+        $page = Page::getInstance();
+        $annulla = self::link(array(
+            "text" => true,
+            "value" => "Annulla",
+            "img" => "undo",
+            "class" => "btn btn-light",
+            "href" => Config::$urlRoot . "/" . $page->alias
+        ));
+
+        return $btn . $ul . $annulla;
+    }
+
+    /**
+     * Crea un controllo con i comandi Salva, Salva e visualizza, Salva e nuovo e il tasto Indietro
+     *
+     * @param array $param
+     * @param object $smarty
+     * @return string
+     */
+    static function create_dropdown($params, $smarty = null)
+    {
+        $page = Page::getInstance();
+
+        $actionId = $params["action_id"];
+
+        $btn = HTML::tag("button", [
+            "text" => true,
+            "title" => Language::get("Azioni"),
+            "class" => "btn btn-primary dropdown-toggle mdc-ripple-upgraded",
+            "id" => "dropdownMenuButton",
+            "type" => "button",
+            "data-bs-toggle" => "dropdown",
+            "aria-expanded" => "false"
+        ], '<i class="leading-icon material-icons dropdown-caret">save</i>' . Language::get("Azioni") . '<i class="trailing-icon material-icons dropdown-caret">arrow_drop_down</i>');
+
+        /**
+         * INSERT COMMAND
+         */
+        $btnInsert = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Salva"),
+            "class" => "btn mdc-ripple-upgraded text-success",
+            "onclick" => "form_insert(this,$actionId);"
+        ], '<i class="material-icons leading-icon">save</i>' . Language::get("Salva"));
+        $liInsert = HTML::tag("li", [], $btnInsert);
+
+        /**
+         * INSERT AND PREVIEW COMMAND
+         */
+        $btnInsertPreview = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Salva e visualizza"),
+            "class" => "btn mdc-ripple-upgraded text-primary",
+            "onclick" => "form_insert_preview(this,$actionId);"
+        ], '<i class="material-icons leading-icon">edit_note</i>' . Language::get("Salva e visualizza"));
+        $liInsertPreview = HTML::tag("li", [], $btnInsertPreview);
+
+        /**
+         * INSERT AND NEW COMMAND
+         */
+        $btnInsertNew = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Salva e nuovo"),
+            "class" => "btn mdc-ripple-upgraded text-secondary",
+            "onclick" => "form_insert_new(this,$actionId);"
+        ], '<i class="material-icons leading-icon">add</i>' . Language::get("Salva e nuovo"));
+        $liInsertNew = HTML::tag("li", [], $btnInsertNew);
+
+        $commands = HTML::tag("ul", [
+            "class" => "dropdown-menu",
+            "aria-labelledby" => "dropdownMenuButton"
+        ], $liInsert . $liInsertPreview . $liInsertNew);
+
+        /**
+         * UNDO COMMAND
+         */
+        $btnUndo = self::link(array(
+            "text" => true,
+            "value" => Language::get("Indietro"),
+            "img" => "undo",
+            "class" => "btn btn-light",
+            "href" => Config::$urlRoot . "/" . $page->alias
+        ));
+
+        return $btn . $commands . $btnUndo;
+    }
+
+    /**
+     * Crea un controllo con i comandi Salva, Salva e visualizza, Elimina e il tasto Indietro
+     *
+     * @param array $param
+     * @param object $smarty
+     * @return string
+     */
+    static function edit_dropdown($params, $smarty = null)
+    {
+        $page = Page::getInstance();
+
+        $actionId = $params["action_id"];
+
+        $btn = HTML::tag("button", [
+            "text" => true,
+            "title" => Language::get("Azioni"),
+            "class" => "btn btn-primary dropdown-toggle mdc-ripple-upgraded",
+            "id" => "dropdownMenuButton",
+            "type" => "button",
+            "data-bs-toggle" => "dropdown",
+            "aria-expanded" => "false"
+        ], '<i class="leading-icon material-icons dropdown-caret">save</i>' . Language::get("Azioni") . '<i class="trailing-icon material-icons dropdown-caret">arrow_drop_down</i>');
+
+        /**
+         * UPDATE COMMAND
+         */
+        $btnUpdate = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Salva"),
+            "class" => "btn mdc-ripple-upgraded text-success",
+            "onclick" => "form_update(this,$actionId);"
+        ], '<i class="material-icons leading-icon">save</i>' . Language::get("Salva"));
+        $liUpdate = HTML::tag("li", [], $btnUpdate);
+
+        /**
+         * UPDATE AND PREVIEW COMMAND
+         */
+        $btnUpdatePerview = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Salva e visualizza"),
+            "class" => "btn mdc-ripple-upgraded text-secondary",
+            "onclick" => "form_update_preview(this,$actionId);"
+        ], '<i class="material-icons leading-icon">edit_note</i>' . Language::get("Salva e visualizza"));
+        $liUpdatePreview = HTML::tag("li", [], $btnUpdatePerview);
+
+        /**
+         * DELETE COMMAND
+         */
+        $btn_delete = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Elimina"),
+            "onclick" => "form_del(this,$actionId);",
+            "class" => "btn mdc-ripple-upgraded text-danger",
+            "data-id" => $actionId
+        ], '<i class="material-icons leading-icon">delete</i>' . Language::get("Elimina"));
+        $liElimina = HTML::tag("li", [], $btn_delete);
+
+        $commands = HTML::tag("ul", [
+            "class" => "dropdown-menu",
+            "aria-labelledby" => "dropdownMenuButton"
+        ], $liUpdate . $liUpdatePreview . $liElimina);
+
+        /**
+         * UNDO COMMAND
+         */
+        $btnUndo = self::link(array(
+            "text" => true,
+            "value" => Language::get("Indietro"),
+            "img" => "undo",
+            "class" => "btn btn-light",
+            "href" => Config::$urlRoot . "/" . $page->alias
+        ));
+
+        return $btn . $commands . $btnUndo;
+    }
+
+    /**
+     * Crea un controllo con i comandi Modifica, Elimina , Clona e il tasto Indietro
+     *
+     * @param array $param
+     * @param object $smarty
+     * @return string
+     */
+    static function show_dropdown($params, $smarty = null)
+    {
+        $page = Page::getInstance();
+
+        $actionId = $params["action_id"];
+
+        $btn = HTML::tag("button", [
+            "text" => true,
+            "title" => Language::get("Azioni"),
+            "class" => "btn btn-primary dropdown-toggle mdc-ripple-upgraded",
+            "id" => "dropdownMenuButton",
+            "type" => "button",
+            "data-bs-toggle" => "dropdown",
+            "aria-expanded" => "false"
+        ], '<i class="leading-icon material-icons dropdown-caret">save</i>' . Language::get("Azioni") . '<i class="trailing-icon material-icons dropdown-caret">arrow_drop_down</i>');
+
+        /**
+         * UPDATE COMMAND
+         */
+        $btnUpdate = self::link([
+            "text" => true,
+            "value" => Language::get("Modifica"),
+            "img" => "edit",
+            "class" => "btn mdc-ripple-upgraded text-warning",
+            "href" => Config::$urlRoot . "/" . $page->alias . "/" . $actionId . "/edit"
+        ]);
+        $liUpdate = HTML::tag("li", [], $btnUpdate);
+
+        /**
+         * DELETE COMMAND
+         */
+        $btn_delete = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Elimina"),
+            "onclick" => "form_del(this,$actionId);",
+            "class" => "btn mdc-ripple-upgraded text-danger",
+            "data-id" => $actionId
+        ], '<i class="material-icons leading-icon">delete</i>' . Language::get("Elimina"));
+        $liElimina = HTML::tag("li", [], $btn_delete);
+
+        /**
+         * CLONE COMMAND
+         */
+        $btnClone = HTML::tag("button", [
+            "type" => "button",
+            "title" => Language::get("Clona"),
+            "class" => "btn mdc-ripple-upgraded text-secondary",
+            "onclick" => "form_clone(this,$actionId);"
+        ], '<i class="material-icons leading-icon">content_copy</i>' . Language::get("Clona"));
+        $liClone = HTML::tag("li", [], $btnClone);
+
+        $commands = HTML::tag("ul", [
+            "class" => "dropdown-menu",
+            "aria-labelledby" => "dropdownMenuButton"
+        ], $liUpdate . $liElimina . $liClone);
+
+        /**
+         * UNDO COMMAND
+         */
+        $btnUndo = self::link(array(
+            "text" => true,
+            "value" => Language::get("Indietro"),
+            "img" => "undo",
+            "class" => "btn btn-light",
+            "href" => Config::$urlRoot . "/" . $page->alias
+        ));
+
+        return $btn . $commands . $btnUndo;
     }
 
     /**

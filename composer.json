@@ -5,7 +5,9 @@
 		"asika/minify" : "^1.0",
 		"mpdf/mpdf" : "^8.1",
 		"illuminate/database" : "^5.5",
-		"google/cloud-translate": "^1.12"
+		"google/cloud-translate" : "^1.12",
+		"melbahja/environ" : "^1.1",
+		"nette/php-generator": "^3.6"
 	},
 	"autoload" : {
 		"psr-4" : {

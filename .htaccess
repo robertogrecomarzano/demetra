@@ -1,4 +1,4 @@
-ErrorDocument 404 /404.htm
+ErrorDocument 404 /404.php
 ErrorDocument 500 /500.htm
 
 Options +FollowSymlinks

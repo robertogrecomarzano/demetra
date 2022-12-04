@@ -1,8 +1,6 @@
 <?php
-namespace App\Core\Classes;
+namespace App\Core\Lib;
 
-use App\Core\Lib\Database;
-use App\Core\Lib\OrmObj;
 use PDO;
 
 /**
@@ -11,48 +9,8 @@ use PDO;
  * @author Roberto
  *        
  */
-class Istat extends OrmObj
+class Istat
 {
-
-    public $orm_table = "istat_comuni";
-
-    public $orm_pk_field = "id";
-
-    /**
-     * Costruttore
-     */
-    public function __construct()
-    {
-        ;
-    }
-
-    public function all($filter = null)
-    {
-        if (! empty($filter))
-            return $this->orm_all($filter);
-        return $this->orm_all([
-            "record_attivo" => "1"
-        ]);
-    }
-
-    public function allKeyPair($label, $filter = null)
-    {
-        if (! empty($filter))
-            return $this->orm_all_key_pair($label, $filter);
-        return $this->orm_all_key_pair($label, [
-            "record_attivo" => "1"
-        ]);
-    }
-
-    public function get($id)
-    {
-        $this->orm_pk_value = $id;
-        return $this->orm_get();
-    }
-
-    // --------------------------------------------------------------------
-    // Funzioni per ricavare i codici istat dati vari parametri di partenza
-    // --------------------------------------------------------------------
 
     /**
      * Ottiene un array con i dati della nazione al quale appartiene il codice ISTAT
@@ -189,10 +147,6 @@ class Istat extends OrmObj
         ));
     }
 
-    // ---------------------------
-    // RESTITUISCE L'OGGETTO $row
-    // CON LE INFO SUL COMUNE
-    // ---------------------------
     /**
      * Ritorna la riga relativa al comune
      *
@@ -277,23 +231,18 @@ class Istat extends OrmObj
      * @param bool $ass
      * @return array
      */
-    public static function getNazioni($ass = true)
+    public static function getNazioni()
     {
-        $sql = "SELECT DISTINCT codice,descrizione FROM istat_nazioni ORDER BY descrizione ASC";
-        $rows = Database::getRows($sql, null, $ass ? PDO::FETCH_KEY_PAIR : PDO::FETCH_ASSOC);
-        return $rows;
+        return Database::getRows("SELECT DISTINCT codice,descrizione FROM istat_nazioni ORDER BY descrizione ASC");
     }
 
     /**
-     * ottiene l'array delle province ( [0]=AA [1]=BB etc.)
-     * A differenza di getProvinceRegione, usa codice_prov,sigla
-     * invece di sigla, sigla
+     * Ritorna le province con codice e sigla
      *
-     * @param bool $ass
      * @param string $regione
-     * @return multitype:unknown
+     * @return array
      */
-    public static function getProvince($ass = true, $regione = null)
+    public static function getProvince($regione = null)
     {
         $params = array();
         $sqlRegione = null;
@@ -304,7 +253,7 @@ class Istat extends OrmObj
             );
         }
         $sql = "SELECT DISTINCT codice_prov,sigla FROM istat_comuni i LEFT JOIN istat_province p ON codice_provincia=codice_prov WHERE codice_prov IS NOT NULL $sqlRegione ORDER BY sigla ASC";
-        $rows = Database::getRows($sql, $params, $ass ? PDO::FETCH_KEY_PAIR : PDO::FETCH_ASSOC);
+        $rows = Database::getRows($sql, $params);
         return $rows;
     }
 
@@ -315,6 +264,6 @@ class Istat extends OrmObj
      */
     public static function getProvinceExt()
     {
-        return Istat::getProvince(true);
+        return Istat::getProvince();
     }
 }

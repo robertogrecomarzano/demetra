@@ -1,14 +1,4 @@
-.panel
-{
-	margin-bottom:5px;
-}
-.panel-body
-{
-	padding:5px;
-}
-
-.panel-heading {
-	padding: 10px 15px;
-	border: none;
-
+.trailing {
+  cursor: default;
+  pointer-events: auto !important;
 }

@@ -4,15 +4,61 @@
 	<xsl:output method="html" />
 
 
-	<xsl:param name="idAzienda" />
-
 	<xsl:template match='menu'>
-				<xsl:apply-templates select='node' />
+		<xsl:apply-templates select='node' />
 	</xsl:template>
 
 	<xsl:template match='node'>
 
+
 		<xsl:if test="not(@hide) and @left='1'">
+
+
+
+			<xsl:variable name="aliasOld">
+				<xsl:value-of select="@id" />
+			</xsl:variable>
+
+			<xsl:variable name="alias"
+				select="translate($aliasOld,'/','')" />
+
+			<a class="nav-link">
+
+				<xsl:if test="descendant::node">
+					<xsl:attribute name='class'>nav-link collapsed</xsl:attribute>
+					<xsl:attribute name='data-bs-toggle'>collapse</xsl:attribute>
+					<xsl:attribute name='data-bs-target'>#collapse<xsl:value-of
+						select="$alias" /></xsl:attribute>
+					<xsl:attribute name='aria-controls'>collapse<xsl:value-of
+						select="$alias" /></xsl:attribute>
+				</xsl:if>
+
+				<xsl:if test="descendant-or-self::node[@id=$id]">
+					<xsl:attribute name='class'>nav-link active</xsl:attribute>
+
+				</xsl:if>
+				
+				
+				<xsl:if test="@id=$id">
+					<xsl:attribute name='class'>nav-link active</xsl:attribute>
+
+				</xsl:if>
+
+
+
+				<xsl:choose>
+					<xsl:when test="descendant::node">
+						<xsl:attribute name='href'>javascript:void(0);</xsl:attribute>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:if test="@id!=''">
+							<xsl:attribute name='href'>
+							<xsl:value-of select="@url" />
+						</xsl:attribute>
+						</xsl:if>
+					</xsl:otherwise>
+				</xsl:choose>
+
 
 			<xsl:if test="@icon!=''">
 				<xsl:variable name="link">
@@ -51,68 +97,46 @@
 					</xsl:otherwise>
 				</xsl:choose>
 			</xsl:variable>
+				<div class="nav-link-icon">
+					<i class="{$link-style} fa-{$link} fa-fw text-{$link-color}"></i>
+				</div>
 
-			<li>
-				<xsl:if test="@id=$id">
-					<xsl:attribute name='class'>active</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="@html!=''">
+						<xsl:value-of select="@html"
+							disable-output-escaping="yes" />
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:value-of select="label" />
+					</xsl:otherwise>
+				</xsl:choose>
+				<xsl:if test="descendant::node">
+					<div class="drawer-collapse-arrow">
+						<i class="material-icons">expand_more</i>
+					</div>
 				</xsl:if>
+			</a>
 
 
-				<a>
-					<xsl:if test="@id!=''">
-						<xsl:attribute name='href'>
-							<xsl:value-of select="@url" />
-						</xsl:attribute>
+
+			<xsl:if test="descendant::node">
+				<!-- Nested drawer nav -->
+				<div class="collapse" id="collapse{$alias}"	aria-labelledby="headingOne" data-bs-parent="#drawerAccordion">
+
+					<xsl:if test="parent::node">
+						<xsl:attribute name='data-bs-parent'>#drawerAccordion<xsl:value-of select="../@id"/></xsl:attribute>
 					</xsl:if>
 					
-					<xsl:if test="@icon!=''">
-						<i class="{$link-style} fa-{$link} fa-fw text-{$link-color}"></i>
+					<xsl:if test="descendant-or-self::node[@id=$id]">
+						<xsl:attribute name='class'>collapse show</xsl:attribute>
 					</xsl:if>
-					
-					<xsl:choose>
-						<xsl:when test="@html!=''">
-							<xsl:value-of select="@html"
-								disable-output-escaping="yes" />
-						</xsl:when>
-						<xsl:otherwise>
-							<xsl:value-of select="label" />
-						</xsl:otherwise>
-					</xsl:choose>
 
-					<xsl:if test="@other!='0' and @other!=''">
-						<span class="pull-right-container">
-							<xsl:variable name="bg-color">
-								<xsl:value-of select="@bg-color" />
-							</xsl:variable>
-							<xsl:variable name="other-title">
-								<xsl:value-of select="@other-title" />
-							</xsl:variable>
-							<small class="label {$bg-color} pull-right"
-								title="{$other-title}">
-								<xsl:value-of select="@other" />
-							</small>
-						</span>
-					</xsl:if>
-					
-					<xsl:if test="@current!='0' and @current!=''">
-						<span class="pull-right-container">
-							<small class="label pull-right">
-								<span class="fas fa-arrow"></span>
-							</small>
-						</span>
-					</xsl:if>
-				</a>
-
-
-				<xsl:if test="descendant-or-self::node[@id=$id]">
-					<ul class='list-unstyled'>
+					<nav id="drawerAccordion{$alias}" class="drawer-menu-nested nav accordion">
 						<xsl:apply-templates select='node' />
-					</ul>
-				</xsl:if>
+					</nav>
 
-			</li>
-
+				</div>
+			</xsl:if>
 		</xsl:if>
 	</xsl:template>
-
 </xsl:stylesheet>

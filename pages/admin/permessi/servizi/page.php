@@ -1,4 +1,8 @@
 <?php
+use App\Core\Lib\Database;
+use App\Core\Lib\Form;
+use App\Core\Lib\Servizi;
+
 $action = isset($_POST['form_action']) ? $_POST['form_action'] : "";
 $actionId = isset($_POST['form_id']) ? $_POST['form_id'] : 0;
 
@@ -35,14 +39,14 @@ if ($action == "mod2" || $action == "add2") {
 
 if (empty($errors)) {
     $newId = Form::processAction($action, $actionId, $table, $tablePk, $mappings, $other);
-    Database::query("UPDATE servizi SET servizio=LOWER(servizio)");
+    Database::update("UPDATE  servizi SET servizio=LOWER(servizio)");
 }
 
 if ($action == "mod2") {
-    Database::query("DELETE FROM servizi_default WHERE id_servizio=?", array(
+    Database::delete("DELETE FROM servizi_default WHERE id_servizio=?", array(
         $newId
     ));
-    Database::query("DELETE FROM servizi_config_gruppo WHERE id_servizio=?", array(
+    Database::delete("DELETE FROM servizi_config_gruppo WHERE id_servizio=?", array(
         $newId
     ));
     

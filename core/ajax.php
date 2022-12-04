@@ -1,13 +1,24 @@
 <?php
+error_reporting(E_ALL & ~ E_DEPRECATED & ~ E_WARNING & ~ E_NOTICE);
+
+require 'vendor/autoload.php';
+require_once "core/database.php";
+
+use App\Core\App;
 use App\Core\Config;
-use App\Core\Classes\User;
-use App\Core\Lib\Database;
+use App\Core\User;
 use App\Core\Lib\Language;
 use App\Core\Lib\Page;
+use Melbahja\Environ\Environ;
 
-error_reporting(E_ALL & ~ E_DEPRECATED & ~ E_WARNING & ~ E_NOTICE);
-include "../config.php";
-include "Framework.php";
+if (empty(Environ::get('APP_KEY'))) {
+    $key = App::createRandomString(40);
+    Environ::set("APP_KEY", $key);
+    $path = '.env';
+    if (file_exists($path))
+        file_put_contents($path, str_replace('APP_KEY = ""', 'APP_KEY = "' . $key . '"', file_get_contents($path)));
+}
+
 $tmp_dir = Config::$serverRoot . DS . "tmp";
 if (! file_exists($tmp_dir))
     mkdir($tmp_dir, 077, true);
@@ -16,7 +27,6 @@ session_start();
 
 $page = Page::getInstance();
 
-Database::initializeConnection(); // inizializza db
 Language::setCurrentLocale(Config::$defaultLocale); // da togliere se prevista i18n e l10n
 date_default_timezone_set("Europe/Rome");
 
@@ -30,12 +40,6 @@ $pagina = explode("/", $_GET["alias"]);
 if (! empty($pagina)) {
     array_pop($pagina);
     $alias = implode("/", $pagina);
-}
-
-if (! empty($_GET["struttura_id"])) {
-    Config::$openPage[] = "engine";
-    Config::$openPage[] = "engine/" . $_GET["struttura_id"];
-    $page->alias = "engine";
 }
 
 if (! isset($_SESSION['user']) && ! in_array($callPage, Config::$openPage) && ! in_array($alias, Config::$openPage))

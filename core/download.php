@@ -1,20 +1,21 @@
 <?php
+use App\Core\App;
 use App\Core\Config;
-use App\Core\Classes\User;
+use App\Core\User;
 use App\Core\Lib\Database;
 use App\Core\Lib\Page;
 
 error_reporting(E_ALL & ~ E_DEPRECATED & ~ E_WARNING & ~ E_NOTICE);
 include "../config.php";
 include "Framework.php";
+
 $tmp_dir = Config::$serverRoot . DS . "tmp";
 if (! file_exists($tmp_dir))
     mkdir($tmp_dir, 077, true);
 session_save_path($tmp_dir);
 session_start();
-$page = Page::getInstance();
-Database::initializeConnection();
-User::setConfig();
+
+App::setConfig();
 
 $type = $_GET["t"];
 $doc = isset($_GET["doc"]) ? $_GET["doc"] : null;

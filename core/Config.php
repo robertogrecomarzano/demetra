@@ -89,6 +89,31 @@ class Config
      */
     public static $defaultLocale = "it_IT";
 
+    public static $languages = [
+        "it_IT" => [
+            "code" => "it",
+            "label" => "Italiano"
+        ],
+        "en_US" => [
+            "code" => "en",
+            "label" => "English"
+        ]
+    ];
+
+    /**
+     * Abilitare switch lingua
+     *
+     * @var string
+     */
+    public static $switchLanguage = true;
+
+    /**
+     * Google Cloud translation API JSON Key
+     */
+    public static $googleCloudTranslationApiProjectId = "ciheam";
+
+    public static $googleCloudTranslationApiKey = "ciheam-a73c7da039cb";
+
     // ------------------------------------
     // Compressione script
     // ------------------------------------
@@ -131,18 +156,11 @@ class Config
      *
      * @var string
      */
-    public static $urlRoot = "http://localhost/square";
+    public static $urlRoot = "http://localhost/square-app";
 
     // ------------------------------------
     // Security
     // ------------------------------------
-
-    /**
-     * Salt per hashing delle password
-     *
-     * @var string
-     */
-    public static $passwordSalt = "a2bcc90502334df57e081c9e7d5ac2d33cf31095";
 
     /**
      * Tempo di expire del token delle form
@@ -157,12 +175,12 @@ class Config
      * @var array string
      */
     public static $openPage = array(
-        "login",
-        "user/confirm",
-        "user/passwordrecovery",
-        "logout",
-        "notauth",
+        "authentication/login",
+        "authentication/register",
+        "authentication/confirm",
+        "authentication/passwordrecovery",
+        "authentication/logout",
         "offline",
-        "notfound"
+        "error"
     );
 }

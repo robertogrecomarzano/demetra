@@ -16,7 +16,7 @@ switch ($action) {
     case "add2":
         $idRiga = Form::processAction($action, $actionId, $table, $tablePk, $mappings);
         if ($idRiga) {
-            Database::query("UPDATE $table SET
+            Database::update("UPDATE  $table SET
 							dal=STR_TO_DATE(?,'%d/%m/%Y'),
 							al=STR_TO_DATE(?,'%d/%m/%Y')
 							WHERE $tablePk=?", array(

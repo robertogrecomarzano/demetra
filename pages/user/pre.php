@@ -1,6 +1,8 @@
 <?php
-use App\Core\Classes\User;
+use App\Core\User;
 use App\Core\Lib\Database;
+use App\Core\Lib\RegExp;
+use App\Core\Lib\Message;
 
 $captcha = $page->addPlugin("Captcha");
 
@@ -39,8 +41,7 @@ if (! empty($action)) {
                     $email,
                     $userId
                 );
-                $res = Database::query($sql, $parameters);
-
+                $res = Database::update($sql, $parameters);
             }
 
             if ($res == null)
@@ -52,7 +53,7 @@ if (! empty($action)) {
                     "nominativo" => $cognome . " " . $nome
                 ));
                 $msg->render();
-                
+
                 $page->addMessages("Dati aggiornati correttamente");
             }
         }

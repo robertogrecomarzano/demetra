@@ -12,12 +12,12 @@ $mappings = array(
 );
 
 if ($action == "confirm") {
-    Database::query("UPDATE $table SET is_attivo=0"); // Disattivo tutti i servizi per il sito
+    Database::update("UPDATE  $table SET is_attivo=0"); // Disattivo tutti i servizi per il sito
 
     $permessi = $_POST['attivo']; // prendo i servizi da attivare per i rispettivi gruppi
     if (count($permessi) > 0)
         foreach ($permessi as $k => $p) {
-            Database::query("UPDATE $table SET is_attivo=1 WHERE id=?", array(
+            Database::update("UPDATE  $table SET is_attivo=1 WHERE id=?", array(
                 $k
             )); // Attivo i servizi per il sito
 
@@ -33,7 +33,7 @@ if ($action == "confirm") {
             ));
 
             foreach ($utenti as $u) {
-                Database::query("INSERT IGNORE INTO servizi_utenti SET id_utente=?, id_servizio=?, id_gruppo=?", array(
+                Database::insert("INSERT IGNORE INTO servizi_utenti SET id_utente=?, id_servizio=?, id_gruppo=?", array(
                     $u['id_utente'],
                     $id_servizio,
                     $id_gruppo
@@ -54,7 +54,7 @@ if ($action == "confirm") {
             $id_gruppo
         ));
         foreach ($utenti as $u) {
-            Database::query("DELETE FROM servizi_utenti WHERE id_utente=? AND id_servizio=? AND id_gruppo=?", array(
+            Database::delete("DELETE FROM servizi_utenti WHERE id_utente=? AND id_servizio=? AND id_gruppo=?", array(
                 $u["id_utente"],
                 $id_servizio,
                 $id_gruppo

@@ -1,4 +1,10 @@
 <?php
+use App\Core\User;
+use App\Core\Lib\Database;
+use App\Core\Lib\Form;
+use App\Core\Lib\Servizi;
+use App\Core\Lib\Message;
+
 $action = isset($_POST['form_action']) ? $_POST['form_action'] : "";
 $actionId = isset($_POST['form_id']) ? $_POST['form_id'] : 0;
 
@@ -54,18 +60,18 @@ if (! empty($action)) {
                 $newId = Form::processAction($action, $actionId, $table, $tablePk, $mappings, $other);
                 $actionId = ($action == "add2" && empty($actionId)) ? $newId : $actionId;
 
-                Database::query("DELETE FROM utenti_has_gruppi WHERE id_utente=?", array(
+                Database::delete("DELETE FROM utenti_has_gruppi WHERE id_utente=?", array(
                     $actionId
                 ));
 
                 if (isset($_POST['gruppo']))
                     foreach ($_POST['gruppo'] as $g)
-                        Database::query("INSERT INTO utenti_has_gruppi SET id_utente=?, id_gruppo_utente=?", array(
+                        Database::insert("INSERT INTO utenti_has_gruppi SET id_utente=?, id_gruppo_utente=?", array(
                             $actionId,
                             $g
                         ));
 
-                Database::query("DELETE FROM servizi_utenti WHERE id_utente=?", array(
+                Database::delete("DELETE FROM servizi_utenti WHERE id_utente=?", array(
                     $actionId
                 ));
                 if (isset($_POST['servizio']))
@@ -86,7 +92,7 @@ if (! empty($action)) {
 
                 break;
             case "del":
-                Database::query("UPDATE utenti SET record_attivo=0 WHERE id_utente=?", array(
+                Database::update("UPDATE  utenti SET record_attivo=0 WHERE id_utente=?", array(
                     $actionId
                 ));
                 break;
@@ -125,13 +131,13 @@ WHERE u.record_attivo=1
 $where2
 GROUP BY id_utente
 ORDER BY g.nome ASC";
-$righe = Database::getRows($sql, $params);
+$righe = Database::getRows($sql);
 
 $page->assign('righe', $righe);
-$gruppi = Database::getRows("SELECT id_gruppo_utente,descrizione FROM utenti_gruppi", null, PDO::FETCH_KEY_PAIR);
+$gruppi = Database::getRows("SELECT id_gruppo_utente,descrizione FROM utenti_gruppi");
 $page->assign("gruppi", $gruppi);
 $servizi = Database::getRows("SELECT DISTINCT id_servizio,descrizione FROM servizi_config_gruppo cs
-		JOIN servizi USING(id_servizio) ", null, PDO::FETCH_KEY_PAIR);
+		JOIN servizi USING(id_servizio) ");
 $page->assign("servizi", $servizi);
 
 Form::mappingsAssignPost($righe, $action, $actionId, $tablePk, $mappings, $page);

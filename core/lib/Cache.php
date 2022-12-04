@@ -2,7 +2,7 @@
 namespace App\Core\Lib;
 
 use App\Core\Config;
-use App\Core\Classes\User;
+use App\Core\User;
 
 /**
  * Cache file-based con gestione dell'expire time

@@ -2,7 +2,7 @@
 namespace App\Core\Lib;
 
 use App\Core\Config;
-use App\Core\Classes\User;
+use App\Core\User;
 
 /**
  * Classe per gestire l'upload di documenti
@@ -443,7 +443,7 @@ class Upload
     public function insertDb()
     {
         $sql = "INSERT INTO " . self::$table . " SET orario=NOW(), filename=?, id_utente=?, descrizione=?, tipo=?, folder=?, dettaglio=?,dettaglio2=?, is_public=?";
-        Database::query($sql, array(
+        Database::insert($sql, array(
             $this->fileName,
             User::getLoggedUserId(),
             $this->fileDesc,
@@ -466,7 +466,7 @@ class Upload
     public function deleteDb($id, $deleteFile = true)
     {
         $sql = "UPDATE " . self::$table . " SET record_attivo=0 WHERE id_upload=?";
-        Database::query($sql, array(
+        Database::update($sql, array(
             $id
         ));
 
