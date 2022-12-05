@@ -89,9 +89,11 @@ NB- la crezione del model va fatta manualmente e dopo aver eseguito il generator
 Nella cartella creata troveremo i templates index, show, create, edit che poteanno essere personalizzati.
 
 
-##Menù
+## Menù
 
+Ogni pagina è mappata all'interno di un file xml (components/com_menu/menu.xml) che viene popolato dalle classi specifiche di ogni sezione (file php presenti nella cartella classes). 
+Se una pagina non è mappata nel menù, non sarà accessibile.
 
-##Classi per la gestione dell'accesso alle risorse
+## Classi per la gestione dell'accesso alle risorse
 
 
