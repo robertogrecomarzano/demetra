@@ -25,30 +25,28 @@ Per poter utilizzare questo strumento, occorre avere installato composer, git, m
 ## Struttura dele directory
 All'interno della directory principale troviamo diverse sottodirectory e file, di seguito le principali.
 
- - core
-	 - lib
-	 - classes
-	 - controller
-	 - templates
-	 - App.php
-	 - Config.php
-	 - ...
- - components
- - pages
- - models
- - index.php
- - ...
+>  - core
+> 	 - lib
+> 	 - classes
+> 	 - controller
+> 	 - templates
+> 	 - App.php
+> 	 - Config.php
+> 	 - ...
+>  - components
+>  - pages
+>  - models
+>  - index.php
 
-**Index.php** è il punto di accesso di ogni pagina
-**pages** raccoglie tutte le pagine del sistema
-**components** include una serie di componenti/plugin che è possibile usare all'interno di una pagina, es. Calendar
-**models** raccoglie le classi che mappano le tabelle del database
-**core** include il cuore vero e proprio dell'app, come controller, templates ecc
-	in **core/controller** troviamo le classi php che gestiscono le richieste di ogni pagina
-	in **core/templates** troviamo il template principale ed altri template come il form di login/register e template specifici per
-	le email.
-	**App.php** si occupa di gestire le varie richieste ed instradare verso il giusto controller la richiesta
-	**Config.php** contiene i parametri principali di configurazione
+ - **Index.php** è il punto di accesso di ogni pagina
+ - **pages** raccoglie tutte le pagine del sistema
+ - **components** include una serie di componenti/plugin che è possibile usare all'interno di una pagina, es. Calendar
+ - **models** raccoglie le classi che mappano le tabelle del database
+ - **core** include il cuore vero e proprio dell'app, come controller, templates ecc 
+	 - in **core/controller** troviamo le classi php che gestiscono le richieste di ogni pagina
+	 - in **core/templates** troviamo il template principale ed altri templates come il form di login/register e template specifici per	le email.
+	 - **App.php** si  occupa di gestire le varie richieste ed instradare verso il giusto controller la richiesta
+	 - **Config.php** contiene i parametri principali di configurazione
 
 ## Smarty template
 L'intero sistema sfrutto il motore di templateing "Smarty Php". Il template principale del sito è presente nel file core/templates/main.tpl, mentre in core/templates/tpl sono presenti i template di altre pagine che richiedono un aspetto grafico diverso, es. pagina di registrazione e di login.
@@ -103,3 +101,7 @@ Nella directory classes sono presenti le classi php che gestiscono:
 	 - proprietario della risorsa, metodo **isUserOwner**()
 	 - può leggere la risorsa, metodo **isReadable**()
 	 - può scrivere/modificare la risorsa, metodo **isWritable**()
+
+
+ 
+
