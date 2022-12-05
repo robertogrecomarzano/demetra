@@ -1,18 +1,18 @@
 <?php
-/* Smarty version 4.2.1, created on 2022-12-01 19:33:41
+/* Smarty version 4.2.1, created on 2022-12-05 14:49:12
   from 'D:\wamp\www\square-app\core\templates\main.tpl' */
 
 /* @var Smarty_Internal_Template $_smarty_tpl */
 if ($_smarty_tpl->_decodeProperties($_smarty_tpl, array (
   'version' => '4.2.1',
-  'unifunc' => 'content_6388f3857e4915_35985061',
+  'unifunc' => 'content_638df6d85769f1_96842505',
   'has_nocache_code' => false,
   'file_dependency' => 
   array (
     '96ba60528d317ff17f02642052ec88a595667311' => 
     array (
       0 => 'D:\\wamp\\www\\square-app\\core\\templates\\main.tpl',
-      1 => 1669919619,
+      1 => 1670248141,
       2 => 'file',
     ),
   ),
@@ -20,7 +20,7 @@ if ($_smarty_tpl->_decodeProperties($_smarty_tpl, array (
   array (
   ),
 ),false)) {
-function content_6388f3857e4915_35985061 (Smarty_Internal_Template $_smarty_tpl) {
+function content_638df6d85769f1_96842505 (Smarty_Internal_Template $_smarty_tpl) {
 $_smarty_tpl->_checkPlugins(array(0=>array('file'=>'D:\\wamp\\www\\square-app\\vendor\\smarty\\smarty\\libs\\plugins\\modifier.date_format.php','function'=>'smarty_modifier_date_format',),));
 ?>
 <!DOCTYPE html>
@@ -266,6 +266,11 @@ echo $_smarty_tpl->tpl_vars['mainInfo']->value;?>
 	
 <?php $_smarty_tpl->_subTemplateRender(((string)$_smarty_tpl->tpl_vars['siteRoot']->value)."/core/templates/foot.tpl", $_smarty_tpl->cache_id, $_smarty_tpl->compile_id, 0, $_smarty_tpl->cache_lifetime, array(), 0, true);
 ?>
+<!-- Hearbeat JavaScript -->
+<?php echo '<script'; ?>
+ src="<?php echo $_smarty_tpl->tpl_vars['siteUrl']->value;?>
+/core/templates/js/hearbeat.js"><?php echo '</script'; ?>
+>
 </body>
 </html><?php }
 }

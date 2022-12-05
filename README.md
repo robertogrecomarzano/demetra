@@ -18,7 +18,7 @@ Per poter utilizzare questo strumento, occorre avere installato composer, git, m
 
 # Installazione
 
-È sufficiente lanciare il comando
+Aprire una console all'interno della cartella www ed eseguire il comando seguente
 
     git clone https://github.com/robertogrecomarzano/square-app.git
 

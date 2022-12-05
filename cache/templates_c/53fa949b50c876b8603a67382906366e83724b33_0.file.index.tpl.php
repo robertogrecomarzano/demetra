@@ -1,18 +1,18 @@
 <?php
-/* Smarty version 4.2.1, created on 2022-12-02 15:56:05
+/* Smarty version 4.2.1, created on 2022-12-05 10:25:17
   from 'D:\wamp\www\square-app\pages\prova\templates\index.tpl' */
 
 /* @var Smarty_Internal_Template $_smarty_tpl */
 if ($_smarty_tpl->_decodeProperties($_smarty_tpl, array (
   'version' => '4.2.1',
-  'unifunc' => 'content_638a120557cdb7_30424582',
+  'unifunc' => 'content_638db8fd065ac6_87646753',
   'has_nocache_code' => false,
   'file_dependency' => 
   array (
     '53fa949b50c876b8603a67382906366e83724b33' => 
     array (
       0 => 'D:\\wamp\\www\\square-app\\pages\\prova\\templates\\index.tpl',
-      1 => 1669992203,
+      1 => 1670232305,
       2 => 'file',
     ),
   ),
@@ -20,7 +20,7 @@ if ($_smarty_tpl->_decodeProperties($_smarty_tpl, array (
   array (
   ),
 ),false)) {
-function content_638a120557cdb7_30424582 (Smarty_Internal_Template $_smarty_tpl) {
+function content_638db8fd065ac6_87646753 (Smarty_Internal_Template $_smarty_tpl) {
 if (!$_smarty_tpl->tpl_vars['src']->value["custom-template"]) {?>
 	<?php echo call_user_func_array( $_smarty_tpl->smarty->registered_plugins[Smarty::PLUGIN_FUNCTION]['form_table'][0], array( array('src'=>$_smarty_tpl->tpl_vars['src']->value,'view'=>'index'),$_smarty_tpl ) );?>
 
