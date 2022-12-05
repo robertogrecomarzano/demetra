@@ -216,5 +216,7 @@
 	</div>
 	
 {include "$siteRoot/core/templates/foot.tpl"}
+<!-- Hearbeat JavaScript -->
+<script src="{$siteUrl}/core/templates/js/hearbeat.js"></script>
 </body>
 </html>

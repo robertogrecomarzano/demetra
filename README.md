@@ -1,4 +1,5 @@
 
+
 # square-app
 
 App in php utilizzata come punto di partenza per nuovi progetti.
@@ -58,15 +59,15 @@ I file smarty sono identificati dall'estensione .tpl e sono caratterizzati da co
 ## Routes
 Ogni pagina dell'app deve rispettare delle regole fisse per poter essere mappata dal file App.php secondo questo schema
 
-|Method          |Uri                            |Action|
-|----------------|-------------------------------|-----------------------------|
-|GET						 |`domain/test`			             |'TestController@index'       |
-|POST            |`domain/test`            			 	|"TestController@store"       |
-|GET             |`domain/test/create`     			 |"TestController@create"      |
-|GET             |`domain/test/{id}`       			 |"TestController@show"        |
-|PUT             |`domain/test/{id}`       			 |"TestController@update"      |
-|GET             |`domain/test/{id}/edit`  			 |"TestController@edit"        |
-|DELETE          |`domain/test/{id}`       			 |"TestController@delete"      |
+|Method          |Uri                            |Action										 |	
+|----------------|-------------------------------|---------------------------|
+|GET						 |`domain/test`			             |TestController@index       |
+|POST            |`domain/test`            			 |TestController@store       |
+|GET             |`domain/test/create`     			 |TestController@create      |
+|GET             |`domain/test/{id}`       			 |TestController@show        |
+|PUT             |`domain/test/{id}`       			 |TestController@update      |
+|GET             |`domain/test/{id}/edit`  			 |TestController@edit        |
+|DELETE          |`domain/test/{id}`       			 |TestController@delete      |
 
 
 ## Lingua
@@ -96,4 +97,9 @@ Se una pagina non è mappata nel menù, non sarà accessibile.
 
 ## Classi per la gestione dell'accesso alle risorse
 
-
+Nella directory classes sono presenti le classi php che gestiscono:
+ - creazione del menù relativo alla specifica sezione
+ - gestione dell'accesso alla risorsa in base al gruppo utente implementando l'interfaccia **IPermissions**, si può così  determinare se l'utente è:
+	 - proprietario della risorsa, metodo **isUserOwner**()
+	 - può leggere la risorsa, metodo **isReadable**()
+	 - può scrivere/modificare la risorsa, metodo **isWritable**()

@@ -86,23 +86,20 @@ $id = $page->getId();
 if (! empty($id))
     $alias .= "/" . $id;
 
-#if (Menu::NodeNotInMenu())
- #   header("Location: " . Config::$urlRoot . "/404?msg=Non si hnno i permessi per la risorsa richiesta");
+if (Menu::NodeNotInMenu() && ! in_array($alias, Config::$openPage))
+    header("Location: " . Config::$urlRoot . "/404?msg=La risorsa richiesta non esiste");
 
-#if (Menu::is_hide($alias))
-    #    header("Location: " . Config::$urlRoot . "/404?msg=Non si hnno i permessi per la risorsa richiesta");
-    
 /**
  * Gestione route
  */
 App::checkRequest();
 
-Menu::setActive($page->alias); // imposta pagina corrente nel menu
+Menu::setActive($alias); // imposta pagina corrente nel menu
 
 $mainTemplateDir = Config::$serverRoot . DS . "core" . DS . "templates";
 $jsFile = $page->serverFolder() . DS . "page.js";
 $cssFile = $page->serverFolder() . DS . "templates" . DS . "main.css";
-#$page->css->addJS(Config::$urlRoot . DS . "core" . DS . "templates" . DS . "js" . DS . "template-script.js", $mainTemplateDir . DS . "js" . DS . "template-script.js");
+# $page->css->addJS(Config::$urlRoot . DS . "core" . DS . "templates" . DS . "js" . DS . "template-script.js", $mainTemplateDir . DS . "js" . DS . "template-script.js");
 
 if (empty($page->template))
     $page->template = $mainTemplateDir . DS . "main.tpl";
@@ -154,6 +151,6 @@ if (isset($_SESSION["redirect"])) {
     unset($_SESSION["redirect"]);
 }
 
-#echo ("<pre><code>" . htmlspecialchars(Menu::$tree->asXML()) . "</code></pre>");
-#die;
+# echo ("<pre><code>" . htmlspecialchars(Menu::$tree->asXML()) . "</code></pre>");
+# die;
 echo $page->render($modules);

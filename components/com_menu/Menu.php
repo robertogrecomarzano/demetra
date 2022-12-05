@@ -362,23 +362,20 @@ class Menu extends Plugin
         return in_array("hide", array_keys($atts_array));
     }
 
-    static function NodeNotInMenu($sezione = null, $idSezione = null)
+    static function NodeNotInMenu()
     {
         $page = Page::getInstance();
         $id = Page::getId();
         $alias = $page->alias;
-        $root = explode("/", $alias);
 
         if (! empty($id))
             $alias .= "/" . $id;
 
-        $node = Menu::findNodeById($alias);
+        $node = Menu::findNodeById($page->alias);
+        $nodeId = Menu::findNodeById($alias);
 
-        if (empty($node))
+        if (empty($node) && empty($nodeId))
             return true;
-
-        if (! empty($sezione) && ! empty($idSezione))
-            return ($id != $idSezione || ($id == $idSezione && ($root[0] != $sezione || empty($root[1]))));
 
         return false;
     }
