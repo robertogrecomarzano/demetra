@@ -101,7 +101,3 @@ Nella directory classes sono presenti le classi php che gestiscono:
 	 - proprietario della risorsa, metodo **isUserOwner**()
 	 - può leggere la risorsa, metodo **isReadable**()
 	 - può scrivere/modificare la risorsa, metodo **isWritable**()
-
-
- 
-
