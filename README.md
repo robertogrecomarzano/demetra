@@ -1,3 +1,4 @@
+
 # square-app
 
 App in php utilizzata come punto di partenza per nuovi progetti.
@@ -8,6 +9,17 @@ App in php utilizzata come punto di partenza per nuovi progetti.
 L'intero sistema si basa sulla presenza di un unico file index.php che si occupa di includere il codice relativo alla singola pagina richiesta. L'url delle pagine rispecchia il path su disco della cartella stessa, quindi se ad esempio si crea la pagina "test", all'interno della directory principale del progetto troveremo nella cartella "pages" la sottocartella "test".
 Quindi possiamo avre anche cartelle annidate, esempio "test/sottotest" che sarà individuata dall'url miodominio/test/sottotest.
 
+
+# Prerequisiti
+
+Per poter utilizzare questo strumento, occorre avere installato composer, git, mysql ed un server web.
+
+
+# Installazione
+
+È sufficiente lanciare il comando
+
+    git clone https://github.com/robertogrecomarzano/square-app.git
 
 ## Struttura dele directory
 All'interno della directory principale troviamo diverse sottodirectory e file, di seguito le principali.
@@ -49,7 +61,7 @@ Ogni pagina dell'app deve rispettare delle regole fisse per poter essere mappata
 |Method          |Uri                            |Action|
 |----------------|-------------------------------|-----------------------------|
 |GET						 |`domain/test`			             |'TestController@index'       |
-|POST            |`domain/test`            			 |"TestController@store"       |
+|POST            |`domain/test`            			 	|"TestController@store"       |
 |GET             |`domain/test/create`     			 |"TestController@create"      |
 |GET             |`domain/test/{id}`       			 |"TestController@show"        |
 |PUT             |`domain/test/{id}`       			 |"TestController@update"      |
@@ -65,15 +77,21 @@ L'app è multilingua e sfrutta le librerie di Google Translate per tradurre in a
 
 Per le pagine in cui è richiesta la gestione CRUD dei dati di una tabella, è possibile sfruttare il generatore di pagine attraverso lo script generator.php (da linea di comando).
 Passando gli opportuni parametri, questo generatore creerà la cartella all'interno di pages ed il controllor sotto controllers, es.
-****php generator.php --folder=test** --extends=TableController *[opzionale]* --model=Persona *[opzionale]***
+
+    php generator.php --folder=test --extends=TableController [opzionale] --model=Persona [opzionale]
+
 Nell'ordine verranno:
  1. creata la cartella pages/test
  2. creato il controller core/controllers/TestController.php per la gestione della tabella persona
 
 Richiamando la pagina domain/test il sistema mostrerà la griglia di gestione del model Persona mappato sulla tabella persona.
 NB- la crezione del model va fatta manualmente e dopo aver eseguito il generator, occorre accedere al controller per impostare i campi del db che si vuole gestire.
+Nella cartella creata troveremo i templates index, show, create, edit che poteanno essere personalizzati.
 
 
+##Menù
 
+
+##Classi per la gestione dell'accesso alle risorse
 
 
