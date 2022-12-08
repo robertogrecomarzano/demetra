@@ -55,7 +55,7 @@ I file smarty sono identificati dall'estensione .tpl e sono caratterizzati da co
 
 
 ## Routes
-Ogni pagina dell'app deve rispettare delle regole fisse per poter essere mappata dal file App.php secondo questo schema
+Ogni pagina dell'app deve rispettare delle regole fisse per poter essere mappata dal file App.php secondo questo schema.
 
 |Method          |Uri                            |Action										 |	
 |----------------|-------------------------------|---------------------------|
@@ -91,7 +91,7 @@ Nella cartella creata troveremo i templates index, show, create, edit che potean
 ## Menù
 
 Ogni pagina è mappata all'interno di un file xml (components/com_menu/menu.xml) che viene popolato dalle classi specifiche di ogni sezione (file php presenti nella cartella classes). 
-Se una pagina non è mappata nel menù, non sarà accessibile.
+
 
 ## Classi per la gestione dell'accesso alle risorse
 
