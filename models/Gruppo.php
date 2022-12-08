@@ -11,6 +11,13 @@ class Gruppo extends Eloquent
     protected $primaryKey = 'id_gruppo_utente';
 
     /**
+     * Impostato a false per disattivare i campi created_at e updated_at
+     *
+     * @var boolean
+     */
+    public $timestamps = false;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -27,26 +34,25 @@ class Gruppo extends Eloquent
      */
     protected $hidden = [];
 
-    
-    
     /**
      * Create a new Eloquent model instance.
      *
-     * @param  array  $attributes
+     * @param array $attributes
      * @return void
      */
     public function __construct(array $attributes = [])
     {
         $this->bootIfNotBooted();
-        
+
         $this->initializeTraits();
-        
+
         $this->syncOriginal();
-        
+
         $this->fill($attributes);
     }
     
-    /**
+
+      /**
      * Esempio di funzione OneToOne (rinominarla in base al campo da restituire)
      *
      * Esempio di chiamata: _GenericModel::find(1)->OneToOne_function;

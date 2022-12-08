@@ -132,9 +132,9 @@ class Message
                 ));
 
                 $retvalue = Mail::sendPHPMailer($this->destinatario_email, $this->subject, $header . $message . $footer, $header . $message . $footer, $this->allegati);
-                
+
                 if ($retvalue['SUCCESS'] == "FALSE")
-                    $page->addWarning("Errore in fase di invio email all'indirizzo " . $this->destinatario_email);
+                    $page->addWarning(Language::get("Errore in fase di invio email all'indirizzo") . " <b>" . $this->destinatario_email) . "</b>";
                 else {
                     if ($this->idOggetto > 0 && ! empty($this->folder)) {
                         $Serverpath = Config::$serverRoot . DS . "public" . DS . $this->folder . DS . $this->idOggetto;
@@ -144,13 +144,18 @@ class Message
                         file_put_contents($Serverpath . DS . $modello . "_" . date("YmdHis") . ".html", $message);
                     }
 
-                    $page->addMessages("Una mail è stata inviata all'indirizzo " . $this->destinatario_email);
+                    $page->addMessages(Language::get("Una mail è stata inviata all'indirizzo") . " <b>" . $this->destinatario_email) . "</b>";
                 }
 
                 $retvalue["message"] = $message;
-                return $retvalue;
+            } else {
+
+                $retvalue['SUCCESS'] = "FALSE";
+
+                $page->addWarning(Language::get("Errore in fase di invio email all'indirizzo") . " <b>" . $this->destinatario_email) . "</b>";
             }
         }
+
         return $retvalue;
     }
 }

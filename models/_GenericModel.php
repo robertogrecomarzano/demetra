@@ -11,6 +11,13 @@ class _GenericModel extends Eloquent
     protected $primaryKey = '';
 
     /**
+     * Impostato a false per disattivare i campi created_at e updated_at
+     *
+     * @var boolean
+     */
+    public $timestamps = false;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -35,10 +42,9 @@ class _GenericModel extends Eloquent
     {
         return $this->hasOne('App\Models\ModelClassName', "fk");
     }
-    
-    
+
     /**
-     * Defisce l'inverso di one-to-one o one-to-many 
+     * Defisce l'inverso di one-to-one o one-to-many
      */
     public function belongsTo_function()
     {
@@ -54,7 +60,7 @@ class _GenericModel extends Eloquent
     {
         return $this->hasMany('App\Models\ModelClassName', "fk");
     }
-    
+
     /**
      * Defisce l'inverso di one-to-one o one-to-many
      */

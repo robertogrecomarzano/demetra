@@ -73,7 +73,7 @@ class AuthenticationRegisterController extends BaseController implements IContro
 
         if (empty($this->page->errors)) {
             $sha_pwd = User::saltPassword($pwd);
-            $gruppo = User::getIdGruppo("user");
+            $gruppo = User::getIdGruppo("operatore");
 
             $db = DB::connection();
 
@@ -105,14 +105,18 @@ class AuthenticationRegisterController extends BaseController implements IContro
 
                 $res = Database::insert($sql, $parameters);
 
+
                 if ($res != null) {
 
                     $userId = Database::getLastIsertId();
+                    
                     Database::insert("INSERT INTO utenti_has_gruppi SET id_utente=?, id_gruppo_utente=?", array(
                         $userId,
                         $gruppo
                     ));
 
+                    
+                    
                     $default = Servizi::getServiziDefault("id_servizio");
                     foreach ($default as $s)
                         Servizi::addServizioUtente($userId, $s);
@@ -143,7 +147,7 @@ class AuthenticationRegisterController extends BaseController implements IContro
                         $db->commit();
                         $this->page->addMessages(Language::get("Per completare la registrazione cliccare sul link presente all'interno del messaggio."));
                     }
-
+                    
                     unset($request);
                 } else {
                     $this->page->addError(Language::get("Errore in fase di registrazione"));

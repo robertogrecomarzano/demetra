@@ -342,6 +342,8 @@ class Page
         }
         $plugin->callerPage = $this;
         $plugin->init();
+
+        $this->css->addJSCode($plugin->addInlineJs());
         return $plugin;
     }
 
@@ -631,7 +633,8 @@ class Page
             "struttura" => Config::$config["denominazione"],
             "isDebug" => Config::$config["debug"],
             "isCollaudo" => Config::$config["collaudo"],
-            "dump" => $this->dump
+            "dump" => $this->dump,
+            "userChangeLanguage" => App::userChangeLanguage()
         ));
 
         $this->tpl->assign($this->assigns);
@@ -686,7 +689,7 @@ class Page
     {
         if (! Config::$config["is_debug"])
             return null;
-        
+
         $callers = debug_backtrace();
         $errore = "<br />" . $callers[0]["file"] . " linea " . $callers[0]["line"];
         ob_start();

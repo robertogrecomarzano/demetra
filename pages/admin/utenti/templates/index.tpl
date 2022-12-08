@@ -2,7 +2,7 @@
 	{form_table src=$src view='index'}
 {else}
 {form_opening}
-<div class='btn btn-group'>{form_link value=$src.title text=true img="add" title=$src.title class="btn btn-primary" writable=$src.writable href="{$siteUrl}/{$src.alias}/create"}</div>
+{form_link value=$src.title text=true img="add" title=$src.title class="btn btn-primary" writable=$src.writable href="{$siteUrl}/{$src.alias}/create"}<hr />
 	<table
 	class="table table-striped table-hover dataTable no-footer dtr-inline"
 	id="dataTables">

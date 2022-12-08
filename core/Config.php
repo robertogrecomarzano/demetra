@@ -5,29 +5,15 @@ class Config
 {
 
     /**
-     * Contiene l'intero record della tabella config
+     * Config table data
      *
      * @var array
      */
     public static $config = array();
 
-    /**
-     * Contiene l'intero record della tabella config_parametri
-     *
-     * @var array
-     */
-    public static $parametri = array();
-
-    /**
-     * Contiene l'intero record della tabella config_parametri_comunicazioni
-     *
-     * @var array
-     */
-    public static $parametri_comunicazioni = array();
-
-    // ------------------------------------
-    // Database connection data
-    // ------------------------------------
+    // ------------------
+    // Languages settings
+    // ------------------
 
     /**
      * App name
@@ -37,58 +23,17 @@ class Config
     public static $app = "Square App";
 
     /**
-     * Database name
-     *
-     * @var string
-     */
-    public static $db = "";
-
-    /**
-     * Database server
-     *
-     * @var string
-     */
-    public static $host = "localhost";
-
-    /**
-     * Database port
-     *
-     * @var string
-     */
-    public static $port = "3306";
-
-    /**
-     * Database user
-     *
-     * @var string
-     */
-    public static $user = "";
-
-    /**
-     * Database password
-     *
-     * @var string
-     */
-    public static $pass = "";
-
-    /**
-     * DBMS usato da PDO
-     *
-     * @var string
-     */
-    static $pdoDbms = "mysql";
-
-    // ------------------------------------
-    // Localization
-    // ------------------------------------
-
-    /**
-     * Locale di default
+     * Default language
      *
      * @var string
      */
     public static $defaultLocale = "it_IT";
 
+    /**
+     * Available languages
+     *
+     * @var array
+     */
     public static $languages = [
         "it_IT" => [
             "code" => "it",
@@ -101,9 +46,9 @@ class Config
     ];
 
     /**
-     * Abilitare switch lingua
+     * Switch language enable/disable
      *
-     * @var string
+     * @var bool
      */
     public static $switchLanguage = true;
 
@@ -133,9 +78,9 @@ class Config
      */
     public static $uniteAndCompressCSS = true;
 
-    // ------------------------------------
-    // Path di installazione
-    // ------------------------------------
+    // -----
+    // Paths
+    // -----
 
     /**
      * Installation root (server/local)
@@ -158,9 +103,9 @@ class Config
      */
     public static $urlRoot = "http://localhost/square-app";
 
-    // ------------------------------------
+    // --------
     // Security
-    // ------------------------------------
+    // --------
 
     /**
      * Tempo di expire del token delle form

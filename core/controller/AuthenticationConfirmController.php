@@ -8,6 +8,7 @@ use App\Core\Lib\Database;
 use App\Core\Lib\Language;
 use App\Core\Lib\Page;
 use App\Core\IController;
+use App\Core\App;
 
 class AuthenticationConfirmController extends BaseController implements IController
 {
@@ -27,7 +28,7 @@ class AuthenticationConfirmController extends BaseController implements IControl
     public function index($request)
     {
         $token = $request["token"];
-
+        App::setConfig(true);
         $row = Database::getRow("SELECT * FROM utenti WHERE token = ? AND record_attivo=0 AND ts_confirm IS NULL AND NOW() <= DATE_ADD(ts_create, INTERVAL 48 HOUR) ", array(
             $token
         ));

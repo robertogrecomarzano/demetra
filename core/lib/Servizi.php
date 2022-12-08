@@ -106,7 +106,7 @@ class Servizi
         return $servizi;
     }
 
-    static function addServizioGruppoRegione($idGruppo, $idServizio)
+    static function addServizioGruppo($idGruppo, $idServizio)
     {
         Database::insert("INSERT INTO servizi_config_gruppo SET id_gruppo_utente=?, id_servizio=? ", array(
             $idGruppo,

@@ -35,7 +35,7 @@ class Form
     {
         $args = Form::processStandardParams($params);
         $args["type"] = "textbox";
-        $args["style"] = ! isset($args["style"]) ? "width:auto;" : $args["style"];
+
         $args["maxlength"] = 10;
         $args["placeholder"] = ! isset($args["placeholder"]) ? "gg/mm/aaaa" : $args["placeholder"];
 
@@ -45,15 +45,11 @@ class Form
         if (isset($params['writable']) && ! $params['writable'])
             $args['disabled'] = "disabled";
 
-        $args['class'] = "form-control";
+        $args['class'] = "form-control calendar";
         $args["onkeydown"] = "return keyCheck(event,this,'data')";
-        $input1 = HTML::tag("input", $args);
+        $input = HTML::tag("input", $args);
 
-        if ($args["data-component"] == true || ! isset($args["data-component"])) {
-            $component = '<span class="input-group-addon"><i class="glyphicon glyphicon-th"></i></span>';
-            return '<div class="input-group date" style="max-width:150px;">' . $input1 . $component . '</div>';
-        } else
-            return $input1;
+        return $input;
     }
 
     /**
@@ -1675,7 +1671,7 @@ class Form
             case "index":
                 $btn = null;
                 if ($writable && $add)
-                    $btn = "<div class='btn btn-group'>" . self::link(array(
+                    $btn =self::link(array(
                         "value" => $title,
                         "text" => true,
                         "img" => "visibility",
@@ -1683,7 +1679,7 @@ class Form
                         "class" => "btn btn-primary",
                         "writable" => $writable,
                         "href" => Config::$urlRoot . "/" . $alias . "/create"
-                    )) . "</div>";
+                    )) ."<hr />";
 
                 if (! $custom_template) {
                     $table = "";
@@ -1706,7 +1702,7 @@ class Form
                             "href" => Config::$urlRoot . "/" . $alias . "/" . $row[$pk],
                             "writable" => true,
                             "img" => 'visibility',
-                            "class" => "btn btn-primary"
+                            "class" => "btn btn-primary block"
                         ));
                         $btn_edit = self::link(array(
                             "text" => false,

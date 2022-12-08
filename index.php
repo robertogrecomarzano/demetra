@@ -86,8 +86,10 @@ $id = $page->getId();
 if (! empty($id))
     $alias .= "/" . $id;
 
-if (Menu::NodeNotInMenu() && ! in_array($alias, Config::$openPage))
-    header("Location: " . Config::$urlRoot . "/404?msg=La risorsa richiesta non esiste");
+    // FIXME: forse conviene gestire la visibilità della pagina dalla funzione App::checkRequest che va a verificare se esiste il controller che gestisce la pagina e non considerare il menù
+    // Se poi si accede ad una risorsa che non è nel menù ma ha il controller, occorre gestire l'accesso alla risorsa attraverso la classe specifica implementando l'interfaccia IPermission
+//if (Menu::NodeNotInMenu() && ! in_array($alias, Config::$openPage))
+ //   header("Location: " . Config::$urlRoot . "/404?msg=La risorsa richiesta non esiste");
 
 /**
  * Gestione route
@@ -130,6 +132,7 @@ $modules = array(
     "left" => $mainMenu,
     "top" => $breadMenu,
     "lang" => substr($lang, 0, 2),
+    "lang_country" => $lang,
     "direction" => $lang == "ar_AR" ? "rtl" : ""
 );
 

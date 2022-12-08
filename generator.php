@@ -73,6 +73,7 @@ if ($delete == "true") {
 
     unlink("core/controller/$className.php");
     unlink("pages/$folder/page.js");
+    unlink("pages/$folder/templates/main.css");
     unlink("pages/$folder/templates/index.tpl");
     unlink("pages/$folder/templates/show.tpl");
     unlink("pages/$folder/templates/edit.tpl");
@@ -97,7 +98,7 @@ foreach ($implements as $i)
     $namespace->addUse("App\\Core\\$i");
 
 if ($model != "ClassNameToRename")
-    $namespace->addUse("App\\Core\\$model");
+    $namespace->addUse("App\\Models\\$model");
 
 $class = $namespace->addClass($className);
 $class->setExtends("App\\Core\\$extends")->addComment("Classe controller per la gestione della pagina $folder\nClasse autogenerata\n\n");
@@ -128,6 +129,7 @@ if ($extends == "TableController")
         ->addBody('$this->src["edit"] = true;')
         ->addBody('$this->src["delete"] = true;')
         ->addBody('$this->src["add"] = true;')
+        ->addBody('$this->src["clone"] = true;')
         ->addBody('$this->src["fields"] = [')
         ->addBody('"SQL_FIELD_1" => [')
         ->addBody('"label" => Language::get("Es. textbox"),')
@@ -213,7 +215,7 @@ foreach (array_unique($methods) as $methodName) {
     if ($extends = "TableController")
         switch ($methodName) {
             case "index":
-                $method->addBody('$rows = [];')
+                $method->addBody('$rows = ' . $model . '::all()->toArray();')
                     ->addBody('$this->src["rows"] = $rows;')
                     ->addBody('$this->page->assign("src", $this->src);');
                 break;
@@ -227,7 +229,7 @@ foreach (array_unique($methods) as $methodName) {
                     ->addBody('$this->page->assign("src", $this->src);');
                 break;
             case "edit":
-                $method->addBody('$row = ' . $model . '::find($request["id"])->toArray();')
+                $method->addBody('$row = ' . $model . '::find($request["id"])->getOriginal();')
                     ->addBody('Form::mappingsAssignPost([$row], "mod", $request["id"], $this->pk, $this->mappings, $this->page);')
                     ->addBody('$this->src["rows"] = $row;')
                     ->addBody('$this->src["view"] = "edit";')
@@ -242,8 +244,9 @@ foreach (array_unique($methods) as $methodName) {
                     ->addBody('$obj = new ' . $model . '();')
                     ->addBody('foreach ($obj->getFillable() as $field)')
                     ->addBody('$params[$field] = $request[$field];')
-                    ->addBody('$result = Gruppo::where($this->pk, $id)->update($params);')
-                    ->addBody('if (! $result) {')
+                    ->addBody('try {')
+                    ->addBody($model . '::where($this->pk, $id)->update($params);')
+                    ->addBody('} catch (\Illuminate\Database\QueryException $ex) {')
                     ->addBody('$this->page->addError(Language::get("Errore in fase di aggiornamento"));')
                     ->addBody('return false;')
                     ->addBody('}')
@@ -297,7 +300,7 @@ foreach (array_unique($methods) as $methodName) {
             case "store_new":
                 $method->addBody('$newId = $this->store($request, false);')
                     ->addBody('if ($newId > 0)')
-                    ->addBody('Page::redirect($this->alias . "/create", "", true, Language::get("Record inserito, puoi procedi con un altro inserimento"));');
+                    ->addBody('Page::redirect($this->alias . "/create", "", true, Language::get("Record inserito, procedi con un altro inserimento"));');
                 break;
             case "clone":
                 $method->addBody('// TODO:')
@@ -323,8 +326,9 @@ file_put_contents("core/controller/$className.php", $output);
 
 mkdir("pages/$folder", 0755, true);
 mkdir("pages/$folder/templates", 0755, true);
-file_put_contents("pages/$folder/page.js", "");
+file_put_contents("pages/$folder/templates/main.css", "");
 
+copy("pages/_generic/page.js", "pages/$folder/page.js");
 copy("pages/_generic/templates/index.tpl", "pages/$folder/templates/index.tpl");
 copy("pages/_generic/templates/show.tpl", "pages/$folder/templates/show.tpl");
 copy("pages/_generic/templates/edit.tpl", "pages/$folder/templates/edit.tpl");

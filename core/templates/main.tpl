@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="{$lang}" direction={$direction}>
-<head>
-{include "$siteRoot/core/templates/head.tpl"}
+<head>{include "$siteRoot/core/templates/head.tpl"}
 </head>
 <body class="nav-fixed bg-light">
 	<!-- Top app bar navigation menu-->
@@ -24,8 +23,10 @@
 				</ul>
 				<!-- Navbar buttons-->
 				<div class="d-flex">
+					{$userChangeLanguage}
 					<!-- Messages dropdown-->
 					<div class="dropdown dropdown-notifications d-none d-sm-block">
+
 						<button class="btn btn-lg btn-icon dropdown-toggle me-3"
 							id="dropdownMenuMessages" type="button" data-bs-toggle="dropdown"
 							aria-expanded="false">
@@ -147,7 +148,8 @@
 									<div class="me-3">{form_lang value="Profilo"}</div>
 							</a></li>
 							<li><hr class="dropdown-divider" /></li>
-							<li><a class="dropdown-item" href="{$siteUrl}/authentication/logout"> <i
+							<li><a class="dropdown-item"
+								href="{$siteUrl}/authentication/logout"> <i
 									class="material-icons leading-icon">logout</i>
 									<div class="me-3">{form_lang value="Esci"}</div>
 							</a></li>
@@ -162,7 +164,8 @@
 		<!-- Layout navigation-->
 		<div id="layoutDrawer_nav">
 			<!-- Drawer navigation-->
-			<nav class="drawer accordion drawer-light bg-white" id="drawerAccordion">
+			<nav class="drawer accordion drawer-light bg-white"
+				id="drawerAccordion">
 				<div class="drawer-menu">
 					<div class="nav">{$left}</div>
 				</div>
@@ -183,17 +186,22 @@
 
 		<!-- Layout content-->
 		<div id="layoutDrawer_content">
-			
+
 			<!-- Main page content-->
 			<main>
 				<div class="p-5">
 					{$mainMessages}{$mainWarnings}{$mainErrors}{$mainInfo}
 					<div class="card card-raised mb-5">
 						<div class="card-body p-5">
-							{if !empty($contentTitle)}<div class="card-title">{$contentTitle}</div>{/if}
-							{if !empty($contentSubTitle)}<div class="card-subtitle mb-4">{$contentSubTitle}</div>{/if}
-							{if !empty($dump)}<div class="border p-3 p-sm-4 bg-black shadow-2 small"><code class="text-white fs-6 mb-2">{$dump}</code></div>{/if}
-							{include file="$pagina"}
+							{if !empty($contentTitle)}
+							<div class="card-title">{$contentTitle}</div>
+							{/if} {if !empty($contentSubTitle)}
+							<div class="card-subtitle mb-4">{$contentSubTitle}</div>
+							{/if} {if !empty($dump)}
+							<div class="border p-3 p-sm-4 bg-black shadow-2 small">
+								<code class="text-white fs-6 mb-2">{$dump}</code>
+							</div>
+							{/if} {include file="$pagina"}
 						</div>
 					</div>
 				</div>
@@ -202,21 +210,26 @@
 			<!-- Min-height is set inline to match the height of the drawer footer-->
 			<footer class="py-4 mt-auto border-top" style="min-height: 74px">
 				<div class="container-xl px-5">
-					<div class="d-flex flex-column flex-sm-row align-items-center justify-content-sm-between small">
-						<div class="me-sm-2">Copyright &copy; {$title} {$smarty.now|date_format:"%Y"}</div>
+					<div
+						class="d-flex flex-column flex-sm-row align-items-center justify-content-sm-between small">
+						<div class="me-sm-2">Copyright &copy; {$title}
+							{$smarty.now|date_format:"%Y"}</div>
 						<div class="d-flex ms-sm-2">
-							<a class="text-decoration-none" href="#!">{form_lang value="Privacy Policy"}</a>
+							<a class="text-decoration-none" href="#!">{form_lang
+								value="Privacy Policy"}</a>
 							<div class="mx-1">&middot;</div>
-							<a class="text-decoration-none" href="#!">{form_lang value="Termini e condizioni"}</a>
+							<a class="text-decoration-none" href="#!">{form_lang
+								value="Termini e condizioni"}</a>
 						</div>
-				</div>
+					</div>
 				</div>
 			</footer>
 		</div>
 	</div>
+
+	{include "$siteRoot/core/templates/foot.tpl"}
+	<!-- Hearbeat JavaScript -->
+	<script src="{$siteUrl}/core/templates/js/hearbeat.js"></script>
 	
-{include "$siteRoot/core/templates/foot.tpl"}
-<!-- Hearbeat JavaScript -->
-<script src="{$siteUrl}/core/templates/js/hearbeat.js"></script>
 </body>
 </html>

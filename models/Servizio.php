@@ -11,11 +11,23 @@ class Servizio extends Eloquent
     protected $primaryKey = 'id_servizio';
 
     /**
+     * Impostato a false per disattivare i campi created_at e updated_at
+     *
+     * @var boolean
+     */
+    public $timestamps = false;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = [];
+    protected $fillable = [
+        "servizio",
+        "descrizione",
+        "menu",
+        "posizione"
+    ];
 
     /**
      * The attributes that should be hidden for arrays.
@@ -24,6 +36,23 @@ class Servizio extends Eloquent
      */
     protected $hidden = [];
 
+    /**
+     * Create a new Eloquent model instance.
+     *
+     * @param array $attributes
+     * @return void
+     */
+    public function __construct(array $attributes = [])
+    {
+        $this->bootIfNotBooted();
+        
+        $this->initializeTraits();
+        
+        $this->syncOriginal();
+        
+        $this->fill($attributes);
+    }
+    
     /**
      * Esempio di funzione OneToOne (rinominarla in base al campo da restituire)
      *
@@ -36,15 +65,14 @@ class Servizio extends Eloquent
         return $this->hasOne('App\Models\ModelClassName', "fk");
     }
     
-    
     /**
-     * Defisce l'inverso di one-to-one o one-to-many 
+     * Defisce l'inverso di one-to-one o one-to-many
      */
     public function belongsTo_function()
     {
         return $this->belongsTo('App\Models\ModelClassName::class');
     }
-
+    
     /**
      * Esempio di funzione OneToMany (rinominarla in base al campo da restituire)
      *

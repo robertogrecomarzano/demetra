@@ -81,4 +81,12 @@ abstract class Plugin
     {
         $this->callerPage->assign($assign1, $assign2);
     }
+
+    /**
+     * Inserisce del codice javasccript alla fine della pagina
+     */
+    function addInlineJs()
+    {
+        ;
+    }
 }

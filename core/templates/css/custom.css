@@ -3,3 +3,8 @@
 	margin-right:2px; 
 	margin-left:2px;
 }
+
+
+div.dataTables_wrapper div.dataTables_length select {
+	min-width: max-content;
+}

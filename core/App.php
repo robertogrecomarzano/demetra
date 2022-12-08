@@ -2,6 +2,7 @@
 namespace App\Core;
 
 use App\Core\Lib\Database;
+use App\Core\Lib\Language;
 use App\Core\Lib\Page;
 
 /**
@@ -86,6 +87,12 @@ class App
                 }
             }
 
+            if (isset($_POST['userChangeLanguage']) && ! empty($_POST['userChangeLanguage'])) {
+                $_SESSION['locale'] = $_POST['userChangeLanguage'];
+                Language::setCurrentLocale($_POST['userChangeLanguage']);
+                Language::setTraduzioni(true);
+            }
+            
             User::online();
 
             User::hasPermission();
@@ -115,7 +122,7 @@ class App
         # if (! empty($id))
         # $uri .= "/$id";
 
-        if (end($parts) == "create")
+        if (end($parts) == "/create")
             array_pop($parts);
 
         $controllerName = implode(array_map('ucfirst', $parts)) . "Controller";
@@ -182,6 +189,10 @@ class App
                             $method = empty($action) ? "update" : $action;
                             $page->view = "edit";
                             break;
+                        case $page->alias:
+                            $method = empty($action) ? "update" : $action;
+                            $page->view = "edit";
+                            break;
                     }
                     break;
                 case "DELETE":
@@ -195,7 +206,7 @@ class App
         }
 
         if (Config::$config["is_debug"])
-            $page->dump( [
+            $page->dump([
                 "URI: " . $uri,
                 "ALIAS: " . $page->alias,
                 "CONTROLLER: " . $controllerName,
@@ -206,8 +217,19 @@ class App
                 "HTTP_METHOD: " . $http_method
             ]);
 
-        # var_dump(implode("\n",[$uri,$page->alias,$controllerName,$method,$_SERVER['REQUEST_METHOD'],$action, $page->view,$http_method." ".$page->view]));
-        # die;
+        /*
+         * var_dump(implode("\n", [
+         * "URI: " . $uri,
+         * "ALIAS: " . $page->alias,
+         * "CONTROLLER: " . $controllerName,
+         * "METHOD: " . $method,
+         * "REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD'],
+         * "ACTION: " . $action,
+         * "VIEW: " . $page->view,
+         * "HTTP_METHOD: " . $http_method
+         * ]));
+         * die;
+         */
         if (is_object($controller) && method_exists($controller, $method))
             $controller->$method($_REQUEST);
         else {
@@ -221,7 +243,7 @@ class App
                 "VIEW: " . $page->view,
                 "HTTP_METHOD: " . $http_method
             ]);
-            
+
             if (User::isUserLogged())
                 $redirectPage = "home";
             else
@@ -326,6 +348,61 @@ class App
             $out .= '<li><a class="' . $class . '" href="#" onclick="$(\'#userSimSelectGruppo\').val(\'' . $g["gruppo"] . '\'); $(\'#userSimForm\').submit()"><i class="fas fa-user fa-2x"></i>' . $g["gruppo_desc"] . '</a></li>';
         }
         $out .= "</ul></li>";
+
+        return $out;
+    }
+
+    /**
+     * Restituisce l'HTML che permette all'utente di cambiare lingua
+     *
+     * @return string
+     */
+    static function userChangeLanguage()
+    {
+        if (! User::isUserLogged() || ! Config::$switchLanguage)
+            return "";
+
+        foreach (Config::$languages as $lang => $value)
+            $lingue[$lang] = $value["label"];
+
+        $out = '<li class="dropdown">
+							<a class="nav-link dropdown-toggle"	data-toggle="dropdown" href="#">
+								<img src="' . Config::$urlRoot . '/core/templates/img/flags/' . $_SESSION['locale'] . '.png" style="height:18px; vertical-align:unset;"/>
+							</a>
+						   <form id="userLanguageForm" method="post" style="display:inline;">
+				   			<input type="hidden" name="userChangeLanguage" id="userChangeLanguage"/>
+							</form>
+							<ul class="dropdown-menu dropdown-user">';
+        
+        $listLanguage = "";
+        foreach ($lingue as $codice => $lingua) {
+            $class = $_SESSION['locale'] == $codice ? "active" : "";
+            
+            $listLanguage.='<li class="dropdown-item '.$class.'">';
+            $listLanguage.='<a class="dropdown-item unread" href="#!" onclick="$(\'#userChangeLanguage\').val(\'' . $codice . '\'); $(\'#userLanguageForm\').submit()">';
+            $listLanguage.='<div class="dropdown-item-content me-2">';
+            $listLanguage.='<div class="dropdown-item-content-text"><img src="' . Config::$urlRoot . '/core/templates/img/flags/' . $codice . '.png" style="height:18px;" class="me-2"/>'.$lingua.'</div>';
+            $listLanguage.='</div>';
+            $listLanguage.='</a>';
+            $listLanguage.='</li>';
+            
+        }
+        $out .= "</ul></li>";
+        
+        
+        $title = Language::get("Seleziona una lingua");
+        $out= '<!-- Languages dropdown-->
+                        <div class="dropdown dropdown-notifications d-none d-sm-block">
+                            <button class="btn btn-lg btn-icon dropdown-toggle me-3" id="dropdownMenuNotifications" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="material-icons">translate</i></button>
+                            <ul class="dropdown-menu dropdown-menu-end me-3 mt-3 py-0 overflow-hidden" aria-labelledby="dropdownMenuNotifications">
+                                <li><h6 class="dropdown-header bg-primary text-white fw-500 py-3">'.$title.'</h6></li>
+                                <li><hr class="dropdown-divider my-0" /></li>
+                                '.$listLanguage.'
+                            </ul>
+                        </div>
+<form id="userLanguageForm" method="post" style="display:inline;">
+				   			<input type="hidden" name="userChangeLanguage" id="userChangeLanguage"/>
+							</form>';
 
         return $out;
     }

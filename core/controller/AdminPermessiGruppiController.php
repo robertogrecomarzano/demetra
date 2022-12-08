@@ -6,6 +6,7 @@ use App\Core\ITableController;
 use App\Core\Lib\Form;
 use App\Core\Lib\Language;
 use App\Core\Lib\Page;
+use App\Core\Lib\Servizi;
 use App\Core\TableController;
 use App\Models\Gruppo;
 
@@ -83,22 +84,24 @@ class AdminPermessiGruppiController extends TableController implements IControll
 
     public function update($request, $redirect = true)
     {
-        $result = false;
+        $check = $this->check($request, false);
+        if (! $check)
+            Page::redirect($this->alias, "", true, Language::get("Record già presente"), "danger");
+
         $id = $request["id"];
-        // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Update
-        // Se l'operazione è andata a buon fine eseguire il redirect
 
         $obj = new Gruppo();
         foreach ($obj->getFillable() as $field)
             $params[$field] = $request[$field];
 
-        $result = Gruppo::where($this->pk, $id)->update($params);
+        try {
+            Gruppo::where($this->pk, $id)->update($params);
+        } catch (\Illuminate\Database\QueryException $ex) {
 
-        if (! $result) {
             $this->page->addError(Language::get("Errore in fase di aggiornamento"));
             return false;
         }
+
         if ($redirect)
             Page::redirect($this->alias, "", true, Language::get("Record aggiornato"));
         else
@@ -107,9 +110,10 @@ class AdminPermessiGruppiController extends TableController implements IControll
 
     public function store($request, $redirect = true)
     {
-        // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Update
-        // Se l'operazione è andata a buon fine eseguire il redirect
+        $check = $this->check($request, true);
+        if (! $check)
+            Page::redirect($this->alias, "", true, Language::get("Record già presente"), "danger");
+
         $obj = new Gruppo();
         foreach ($obj->getFillable() as $field)
             $params[$field] = $request[$field];
@@ -119,6 +123,11 @@ class AdminPermessiGruppiController extends TableController implements IControll
             $this->page->addError("Errore in fase di registrazione");
             return false;
         }
+
+        $servizi = Servizi::getServizi("id_servizio");
+        foreach ($servizi as $s)
+            Servizi::addServizioGruppoRegione($newId, $s['servizio']);
+
         if ($redirect)
             Page::redirect($this->alias, "", true, Language::get("Record registrato"));
         else
@@ -153,7 +162,7 @@ class AdminPermessiGruppiController extends TableController implements IControll
     {
         $newId = $this->store($request, false);
         if ($newId > 0)
-            Page::redirect($this->alias . "/create", "", true, Language::get("Record inserito, puoi procedi con un altro inserimento"));
+            Page::redirect($this->alias . "/create", "", true, Language::get("Record inserito, procedi con un altro inserimento"));
     }
 
     public function update_preview($request)
@@ -177,5 +186,24 @@ class AdminPermessiGruppiController extends TableController implements IControll
             return false;
         }
         Page::redirect($this->alias, "", true, Language::get("Record clonato"));
+    }
+
+    private function check($request, $isNew = false)
+    {
+        if (! isset($request['nome']) || empty($request['nome']))
+            $errors[] = "Indicare il gruppo.";
+        if (! isset($request['descrizione']) || empty($request['descrizione']))
+            $errors[] = "Indicare una descrizione per il gruppo.";
+
+        if ($isNew)
+            if (Form::checkDupes($this->table, $this->mappings, array(
+                "nome"
+            )))
+                $errors[] = "Gruppo già inserito, indicare un'altra voce e riprovare!";
+
+        foreach ($errors as $e)
+            $this->page->addError($e);
+
+        return empty($errors);
     }
 }

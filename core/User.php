@@ -59,8 +59,7 @@ class User
                 "icon-color" => "primary"
             ]);
             Menu::hideById("user/$idUtente");
-            
-            
+
             Menu::appendToNode($root, "home", Language::get("Home"), Language::get("Pagina iniziale"), Language::get("Pagina iniziale"), "", "", [
                 "icon" => "tachometer-alt",
                 "icon-color" => "red"
@@ -76,15 +75,11 @@ class User
                         Menu::appendToNode($admin, "admin/configurazione", Language::get("Configurazione"), Language::get("Configurazione parametri di sistema"), Language::get("Configurazione parametri di sistema"), "", "", "cog");
                         Menu::appendToNode($admin, "admin/avvisi", Language::get("Avvisi/News"), Language::get("Sezione relativa alla gestione degli avvisi da inserire sul portale"), "", "", "", "newspaper");
 
-                        $NodePermessi = Menu::appendToNode($admin, "admin/permessi", Language::get("Servizi e permessi"), Language::get("Gestione servizi, permessi ed abilitazione profili"), "", "", "", "puzzle-piece");
+                        $NodePermessi = Menu::appendToNode($admin, "admin/permessi", Language::get("Servizi e gruppi"), Language::get("Gestione servizi, permessi ed abilitazione profili"), "", "", "", "puzzle-piece");
                         Menu::appendToNode($NodePermessi, "admin/permessi/servizi", Language::get("Servizi"), Language::get("Gestione servizi disponibili"), "", "", "", "bars");
                         Menu::appendToNode($NodePermessi, "admin/permessi/gruppi", Language::get("Gruppi"), Language::get("Gestione gruppi/ruoli"), "", "", "", "users");
-                        Menu::appendToNode($NodePermessi, "admin/permessi/associaservizi", Language::get("Associa Servizi|Gruppi"), Language::get("Abilitare o disabilitare i servizi per i gruppi"), "", "", "", "angle-double-right");
-                        //Menu::appendToNode($NodePermessi, "admin/permessi/pagine", Language::get("Pagine"), Language::get("Gestione permessi singole pagine"), "", "", "", "file");
-
-                        //$aiuto = Menu::appendToNode($admin, "admin/help", "Help/Faq", "Gestione Help in linea e Faq", "", "", "", "question");
-                        //Menu::appendToNode($aiuto, "admin/help/pagine", "Help pagine", "Gestione help in linea per singola pagina", "", "", "", "question");
-                        //Menu::appendToNode($aiuto, "admin/help/faq", "Gestisci Faq", "Gestione delle Faq", "", "", "", "question");
+                        Menu::appendToNode($NodePermessi, "admin/permessi/associaservizi", Language::get("Abilita servizi per gruppo"), Language::get("Abilitare o disabilitare i servizi per i gruppi"), "", "", "", "list-check");
+                        // Menu::appendToNode($NodePermessi, "admin/permessi/pagine", Language::get("Pagine"), Language::get("Gestione permessi singole pagine"), "", "", "", "file");
                     }
 
                     Menu::appendToNode($admin, "admin/utenti", Language::get("Gestione utenti"), Language::get("Gestione completa degli utenti del sistema"), "", "", "", "user-plus");
@@ -92,23 +87,24 @@ class User
 
                     Menu::appendToNode($admin, "admin/testmail", Language::get("Test email"), Language::get("Testare l'invio delle email"), Language::get("Testare l'invio delle email"), "", "", "envelope");
 
-                    //Menu::appendToNode($admin, "admin/editor", "Editor", "Editor file", "Editor file", "", "", "edit");
+                    // Menu::appendToNode($admin, "admin/editor", "Editor", "Editor file", "Editor file", "", "", "edit");
 
-                    
-                    $help = Menu::appendToNode($root, "public/aiuto", "Aiuto", "Aiuto", "Sezione di aiuto", "", "", [
-                        "icon" => "question-circle",
-                        "icon-color" => "blue"
-                    ]);
-                    Menu::appendToNode($help, "public/aiuto/news", "Avvisi", "Avvisi", "Sezione avvisi e news", "", "", [
+                    Menu::appendToNode($admin, "admin/avvisi", Language::get("Avvisi"), Language::get("Avvisi"), Language::get("Gestione avvisi da pubblicare sul portale"), "", "", [
                         "icon" => "newspaper",
-                        "icon-color" => "blue"
+                        "icon-color" => "purple"
                     ]);
-                    Menu::appendToNode($help, "public/aiuto/faq", "Faq", "Faq", "Consulta le faq (domande frequenti)", "", "", [
+
+                    $help = Menu::appendToNode($admin, "aiuto", Language::get("Aiuto"), Language::get("Aiuto"), Language::get("Gestione help e avvisi"), "", "", [
                         "icon" => "question-circle",
                         "icon-color" => "blue"
                     ]);
-                    Menu::appendToNode($help, "public/aiuto/ticket", "Ticket", "Ticket", "Richiedi assistenza aprendo un ticket", "", "", [
-                        "icon" => "ticket-alt",
+
+                    Menu::appendToNode($help, "aiuto/faq", Language::get("FAQ"), Language::get("FAQ"), Language::get("Gestione delle FAQ"), "", "", [
+                        "icon" => "question-circle",
+                        "icon-color" => "blue"
+                    ]);
+                    Menu::appendToNode($help, "aiuto/pagine", Language::get("Help in linea"), Language::get("Help in linea"), Language::get("Gestionde dell'Help in linea"), "", "", [
+                        "icon" => "question-circle",
                         "icon-color" => "blue"
                     ]);
 
@@ -118,7 +114,7 @@ class User
                     break;
             }
 
-           //Menu::hideById("user");
+            // Menu::hideById("user");
         }
 
         # Menu::hideById("public/aiuto");
@@ -225,8 +221,9 @@ class User
         ));
 
         $res = (new self())->getUserData($userId);
-
+        
         $tot = count($res);
+        
         if ($tot > 0) {
 
             $gruppi = array();
@@ -260,6 +257,7 @@ class User
             $_SESSION['user']['permessi'] = Permission::getPrivileges();
 
             User::online("login");
+           
         }
     }
 
@@ -447,7 +445,7 @@ class User
                     App::$pg,
                     User::$url
                 ));
-
+                
                 break;
             case "logout":
                 Database::update("UPDATE  utenti_online SET status=0 WHERE id_utente=? AND ip=?", array(

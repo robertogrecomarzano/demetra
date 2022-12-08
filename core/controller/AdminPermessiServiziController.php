@@ -1,33 +1,29 @@
 <?php
 namespace App\Core\Controller;
 
+use App\Core\IController;
 use App\Core\ITableController;
-use App\Core\TableController;
+use App\Core\Lib\Database;
 use App\Core\Lib\Form;
 use App\Core\Lib\Language;
 use App\Core\Lib\Page;
 use App\Core\Lib\Servizi;
 use App\Models\Servizio;
+use App\Core\TableController;
 
 /**
  * Classe controller per la gestione della pagina admin/permessi/servizi
  * Classe autogenerata
  */
-class AdminPermessiServiziController extends TableController implements ITableController
+class AdminPermessiServiziController extends TableController implements IController, ITableController
 {
 
     public function __construct($alias)
     {
         $this->page = Page::getInstance();
         $this->alias = $alias;
-
-        /**
-         * Se la tabella prevede altre tabelle di lookup, usare il template custom (custom_template=true)
-         * Esempio, tabella utente che ha gruppi e servizi associati per i quali occorre creare dei check specifici
-         */
-
+        $this->src["alias"] = $alias;
         $this->custom_template = false;
-
         $this->table = "servizi";
         $this->pk = "id_servizio";
 
@@ -48,6 +44,7 @@ class AdminPermessiServiziController extends TableController implements ITableCo
         $this->src["edit"] = true;
         $this->src["delete"] = true;
         $this->src["add"] = true;
+        $this->src["clone"] = false;
         $this->src["fields"] = [
             "servizio" => [
                 "label" => Language::get("Servizio"),
@@ -81,21 +78,12 @@ class AdminPermessiServiziController extends TableController implements ITableCo
         ];
     }
 
-    public function index($request)
-    {
-        $rows = Servizi::getServiziLista();
-
-        $this->src["rows"] = $rows;
-        $this->page->assign("src", $this->src);
-    }
-
     public function edit($request)
     {
         $row = Servizio::find($request["id"])->toArray();
         Form::mappingsAssignPost([
             $row
         ], "mod", $request["id"], $this->pk, $this->mappings, $this->page);
-
         $this->src["rows"] = $row;
         $this->src["view"] = "edit";
         $this->page->assign("src", $this->src);
@@ -105,7 +93,14 @@ class AdminPermessiServiziController extends TableController implements ITableCo
     {
         $row = Servizio::find($request["id"])->toArray();
         $this->src["rows"] = $row;
-        $this->src["view"] = "show";
+        $this->src["view"] = "edit";
+        $this->page->assign("src", $this->src);
+    }
+
+    public function index($request)
+    {
+        $rows = Servizio::all()->toArray();
+        $this->src["rows"] = $rows;
         $this->page->assign("src", $this->src);
     }
 
@@ -116,36 +111,76 @@ class AdminPermessiServiziController extends TableController implements ITableCo
 
     public function update($request, $redirect = true)
     {
-        $result = false;
         $id = $request["id"];
 
-        // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Update
-        // Se l'operazione è andata a buon fine eseguire il redirect
-
-        if (! $result)
+        $check = $this->check($request, false);
+        if (! $check)
             return false;
 
+        $obj = new Servizio();
+        foreach ($obj->getFillable() as $field)
+            $params[$field] = $request[$field];
+
+        try {
+            Servizio::where($this->pk, $id)->update($params);
+        } catch (\Illuminate\Database\QueryException $ex) {
+
+            $this->page->addError(Language::get("Errore in fase di aggiornamento"));
+            return false;
+        }
+
+        Database::delete("DELETE FROM servizi_default WHERE id_servizio=?", [
+            $id
+        ]);
+        Database::delete("DELETE FROM servizi_config_gruppo WHERE id_servizio=?", [
+            $id
+        ]);
+        Database::delete("DELETE FROM protocolli WHERE id_servizio=?", [
+            $id
+        ]);
+        Database::delete("DELETE FROM protocolli_head_foot WHERE id_servizio=?", [
+            $id
+        ]);
+
+        Database::update("UPDATE servizi SET servizio=LOWER(servizio)");
+
+        $gruppi = Database::getRows("SELECT id_gruppo_utente FROM utenti_gruppi");
+        foreach ($gruppi as $g)
+            Servizi::addServizioGruppo($g['id_gruppo_utente'], $id);
+
+        Servizi::addServizioDefault($id);
+
         if ($redirect)
-            Page::redirect($this->alias, "", true, Language::get("Servizio aggiornato"));
+            Page::redirect($this->alias, "", true, Language::get("Record aggiornato"));
         else
             return true;
     }
 
     public function store($request, $redirect = true)
     {
-        $result = false;
-        $id = null;
+        $check = $this->check($request, true);
+        if (! $check)
+            return false;
 
-        // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Insert
-        // Se l'operazione è andata a buon fine eseguire il redirect
+        $obj = new Servizio();
+        foreach ($obj->getFillable() as $field)
+            $params[$field] = $request[$field];
+        $newId = $obj->insertGetId($params);
+        if (! $newId) {
+            $this->page->addError("Errore in fase di registrazione");
+            return false;
+        }
 
-        if (! $newId)
-            return $newId;
+        Database::update("UPDATE servizi SET servizio=LOWER(servizio)");
+
+        $gruppi = Database::getRows("SELECT id_gruppo_utente FROM utenti_gruppi");
+        foreach ($gruppi as $g)
+            Servizi::addServizioGruppo($g['id_gruppo_utente'], $newId);
+
+        Servizi::addServizioDefault($newId);
 
         if ($redirect)
-            Page::redirect($this->alias, "", true, Language::get("Servizio registrato"));
+            Page::redirect($this->alias, "", true, Language::get("Record registrato"));
         else
             return true;
     }
@@ -154,43 +189,58 @@ class AdminPermessiServiziController extends TableController implements ITableCo
     {
         $result = false;
         $id = $request["id"];
-
-        // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Delete
-        // Se l'operazione è andata a buon fine eseguire il redirect
-
-        if (! $result)
+         
+        $result = Servizio::destroy($id);
+        if (! $result) {
+            $this->page->addError("Errore in fase di cancellazione");
             return false;
-
-        Page::redirect($this->alias, "", true, Language::get("Servizio eliminato"));
+        }
+        Page::redirect($this->alias, "", true, Language::get("Record eliminato"));
     }
 
     public function store_preview($request)
     {
         $newId = $this->store($request, false);
         if ($newId > 0)
-            Page::redirect($this->alias . "/" . $newId, "", true, Language::get("Servizio inserito"));
-    }
-
-    public function update_preview($request)
-    {
-        $result = $this->update($request, false);
-        if ($result)
-            Page::redirect($this->alias . "/" . $request["id"], "", true, Language::get("Servizio aggiornato"));
+            Page::redirect($this->alias . "/" . $request["id"], "", true, Language::get("Record inserito"));
     }
 
     public function store_new($request)
     {
         $newId = $this->store($request, false);
         if ($newId > 0)
-            Page::redirect($this->alias . "/create", "", true, Language::get("Servizio inserito, procedi con un altro inserimento"));
+            Page::redirect($this->alias . "/create", "", true, Language::get("Record inserito, procedi con un altro inserimento"));
     }
 
-    public function clone($request, $redirect = true)
+    public function update_preview($request)
     {
-        // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Clone
-        // Se l'operazione è andata a buon fine eseguire il redirect
-        Page::redirect($this->alias, "", true, Language::get("Servizio clonato"));
+        $result = $this->update($request, false);
+        if ($result)
+            Page::redirect($this->alias . "/" . $request["id"], "", true, Language::get("Record aggiornato"));
+    }
+
+    public function clone($request)
+    {}
+
+    private function check($request, $isNew = false)
+    {
+        if (! isset($request['descrizione']) || empty($request['descrizione']))
+            $errors[] = "Indicare la descrizione.";
+        if (! isset($request['menu']) || empty($request['menu']))
+            $errors[] = "Indicare la voce del menù.";
+        if (! isset($request['posizione']) || empty($request['posizione']))
+            $errors[] = "Indicare la posizione.";
+
+        if ($isNew)
+            if (Form::checkDupes("servizi", [
+                "servizio" => "servizio"
+            ], [
+                "servizio"
+            ]))
+                $errors[] = Language::get("Servizio già presente");
+        foreach ($errors as $e)
+            $this->page->addError($e);
+
+        return empty($errors);
     }
 }
