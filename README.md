@@ -2,7 +2,7 @@
 
 # square-app
 
-App in php utilizzata come punto di partenza per nuovi progetti.
+App sviluppata in php/mysql con bootstrap utilizzata come punto di partenza per nuovi progetti.
 
 
 # Introduzione
