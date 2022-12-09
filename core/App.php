@@ -2,6 +2,7 @@
 namespace App\Core;
 
 use App\Core\Lib\Database;
+use App\Core\Lib\Form;
 use App\Core\Lib\Language;
 use App\Core\Lib\Page;
 
@@ -71,7 +72,7 @@ class App
                 $_SESSION['user']['simulation']['id'] = User::getLoggedUserId();
                 $_SESSION['user']['simulation']['gruppo'] = $simulatedGroup;
                 $_SESSION['user']['gruppo'] = $simulatedGroup;
-                Page::redirect("home1");
+                Page::redirect("home");
             } else {
                 // Controllo user simulation - SuperUser
                 if ((isset($_POST['userSimSelect']) && $_POST['userSimSelect'] > 0) || (isset($_POST['form_changeuser']) && ! empty($_POST['form_changeuser']) && $_POST["form_changeuser"] > 0)) {
@@ -84,6 +85,8 @@ class App
                     $_SESSION['user']['simulation']['id'] = $simulatedUserId;
                     $_SESSION['user']['simulation']['gruppo'] = $simulatedUserGroup;
                     $_SESSION['user']['simulation']['superuser'] = true;
+
+                    return;
                 }
             }
 
@@ -92,7 +95,7 @@ class App
                 Language::setCurrentLocale($_POST['userChangeLanguage']);
                 Language::setTraduzioni(true);
             }
-            
+
             User::online();
 
             User::hasPermission();
@@ -205,31 +208,6 @@ class App
             }
         }
 
-        if (Config::$config["is_debug"])
-            $page->dump([
-                "URI: " . $uri,
-                "ALIAS: " . $page->alias,
-                "CONTROLLER: " . $controllerName,
-                "METHOD: " . $method,
-                "REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD'],
-                "ACTION: " . $action,
-                "VIEW: " . $page->view,
-                "HTTP_METHOD: " . $http_method
-            ]);
-
-        /*
-         * var_dump(implode("\n", [
-         * "URI: " . $uri,
-         * "ALIAS: " . $page->alias,
-         * "CONTROLLER: " . $controllerName,
-         * "METHOD: " . $method,
-         * "REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD'],
-         * "ACTION: " . $action,
-         * "VIEW: " . $page->view,
-         * "HTTP_METHOD: " . $http_method
-         * ]));
-         * die;
-         */
         if (is_object($controller) && method_exists($controller, $method))
             $controller->$method($_REQUEST);
         else {
@@ -283,42 +261,45 @@ class App
             return "";
 
         $sql = "SELECT u.*,g.nome AS gruppo,
-		CONCAT(IFNULL(u.cognome,''), ' ',IFNULL(u.nome,'')) AS username
+        CONCAT(u.cognome,' ',u.nome) AS utente
 		FROM utenti u
 		JOIN utenti_has_gruppi ug USING(id_utente)
 		JOIN utenti_gruppi g USING(id_gruppo_utente)
-		WHERE u.record_attivo=1 
+		WHERE u.record_attivo=1
 		GROUP BY id_utente
 		ORDER BY g.nome, username";
 
         $utenti = Database::getRows($sql);
+
         if (count($utenti) == 0)
-            return;
+            return null;
 
-        $gr = "";
-        $out = '<li class="dropdown">
-							<a class="dropdown-toggle"	data-toggle="dropdown" href="#">
-								<i class="fas fa-users fa-2x"></i>
-								<i class="fas fa-caret-down"></i>
-							</a>
-						   <form id="userSimFormSuper" method="post" style="display:inline;">
-				   			<input type="hidden" name="userSimSelect" id="userSimSelect"/>
-							</form>
-							<ul class="dropdown-menu scrollable-menu" role="menu">';
-        foreach ($utenti as $g) {
-            if ($gr != $g["gruppo"]) {
-                $out .= '<li class=\'active\'><a href="#"><strong>' . strtoupper($g["gruppo"]) . '</strong></a></li>';
-                $gr = $g["gruppo"];
-            }
-            $class = null;
-            if (isset($_SESSION['user']['simulation']))
-                $class = $_SESSION['user']['simulation']['id'] == $g["id_utente"] ? "active" : "";
+        $src = [];
 
-            $out .= '<li><a class="' . $class . '" href="#" onclick="$(\'#userSimSelect\').val(\'' . $g["id_utente"] . '\'); $(\'#userSimFormSuper\').submit()"><i class="fas fa-user fa"></i> ' . $g["username"] . '</a></li>';
-        }
-        $out .= "</ul></li>";
+        foreach ($utenti as $g)
+            $src[strtoupper($g["gruppo"])][] = [
+                "key" => $g["id_utente"],
+                "label" => $g["cognome"] . " " . $g["nome"],
+                "subtext" => $g["email"]
+            ];
 
-        return $out;
+        $_POST["superuserSimulation"] = $_SESSION['user']['simulation']['id'];
+
+        $select = Form::selectGroup([
+            "first" => false,
+            "title" => Language::get("Seleziona utente"),
+            "class" => "selectpicker form-control",
+            "src" => $src,
+            "key" => "key",
+            "label" => "label",
+            "data-live-search" => "true",
+            "data-width" => "auto",
+            "data-style" => "btn btn-primary",
+            "name" => "superuserSimulation",
+            "onchange" => "$('#userSimSelect').val($(this).val()); $('#userSimFormSuper').submit()"
+        ]);
+
+        return '<form id="userSimFormSuper" method="post" style="display:inline;"><input type="hidden" name="userSimSelect" id="userSimSelect"/>' . $select . '</form>';
     }
 
     /**
@@ -334,20 +315,29 @@ class App
         if (count($gruppi) == 1)
             return "";
 
-        $out = '<li class="dropdown">
-							<a class="dropdown-toggle"	data-toggle="dropdown" href="#">
-								<i class="fas fa-refresh fa-2x"></i>
-								<i class="fas fa-caret-down"></i>
-							</a>
-						   <form id="userSimForm" method="post" style="display:inline;">
-				   			<input type="hidden" name="userSimSelectGruppo" id="userSimSelectGruppo"/>
-							</form>
-							<ul class="dropdown-menu dropdown-user">';
+        $listGruppi = "";
         foreach ($gruppi as $g) {
             $class = $_SESSION['user']['gruppo'] == $g["gruppo"] ? "active" : "";
-            $out .= '<li><a class="' . $class . '" href="#" onclick="$(\'#userSimSelectGruppo\').val(\'' . $g["gruppo"] . '\'); $(\'#userSimForm\').submit()"><i class="fas fa-user fa-2x"></i>' . $g["gruppo_desc"] . '</a></li>';
+            $listGruppi .= '<li class="dropdown-item ' . $class . '">';
+            $listGruppi .= '<a class="dropdown-item unread" href="#!" onclick="$(\'#userSimSelectGruppo\').val(\'' . $g["gruppo"] . '\'); $(\'#userSimForm\').submit()">';
+            $listGruppi .= '<div class="dropdown-item-content me-2">';
+            $listGruppi .= '<div class="dropdown-item-content-text">' . $g["gruppo_desc"] . '</div>';
+            $listGruppi .= '</div>';
+            $listGruppi .= '</a>';
+            $listGruppi .= '</li>';
         }
-        $out .= "</ul></li>";
+        $title = Language::get("Cambia profilo");
+        $out = '<div class="dropdown dropdown-notifications d-none d-sm-block">
+                            <button class="btn btn-lg btn-icon dropdown-toggle me-3" id="dropdownMenuNotifications" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="material-icons">people</i></button>
+                            <ul class="dropdown-menu dropdown-menu-end me-3 mt-3 py-0 overflow-hidden" aria-labelledby="dropdownMenuNotifications">
+                                <li><h6 class="dropdown-header bg-primary text-white fw-500 py-3">' . $title . '</h6></li>
+                                <li><hr class="dropdown-divider my-0" /></li>
+                                ' . $listGruppi . '
+                            </ul>
+                        </div>
+                        <form id="userSimForm" method="post" style="display:inline;">
+				   		<input type="hidden" name="userSimSelectGruppo" id="userSimSelectGruppo"/>
+						</form>';
 
         return $out;
     }
@@ -365,45 +355,31 @@ class App
         foreach (Config::$languages as $lang => $value)
             $lingue[$lang] = $value["label"];
 
-        $out = '<li class="dropdown">
-							<a class="nav-link dropdown-toggle"	data-toggle="dropdown" href="#">
-								<img src="' . Config::$urlRoot . '/core/templates/img/flags/' . $_SESSION['locale'] . '.png" style="height:18px; vertical-align:unset;"/>
-							</a>
-						   <form id="userLanguageForm" method="post" style="display:inline;">
-				   			<input type="hidden" name="userChangeLanguage" id="userChangeLanguage"/>
-							</form>
-							<ul class="dropdown-menu dropdown-user">';
-        
         $listLanguage = "";
         foreach ($lingue as $codice => $lingua) {
             $class = $_SESSION['locale'] == $codice ? "active" : "";
-            
-            $listLanguage.='<li class="dropdown-item '.$class.'">';
-            $listLanguage.='<a class="dropdown-item unread" href="#!" onclick="$(\'#userChangeLanguage\').val(\'' . $codice . '\'); $(\'#userLanguageForm\').submit()">';
-            $listLanguage.='<div class="dropdown-item-content me-2">';
-            $listLanguage.='<div class="dropdown-item-content-text"><img src="' . Config::$urlRoot . '/core/templates/img/flags/' . $codice . '.png" style="height:18px;" class="me-2"/>'.$lingua.'</div>';
-            $listLanguage.='</div>';
-            $listLanguage.='</a>';
-            $listLanguage.='</li>';
-            
+            $listLanguage .= '<li class="dropdown-item ' . $class . '">';
+            $listLanguage .= '<a class="dropdown-item unread" href="#!" onclick="$(\'#userChangeLanguage\').val(\'' . $codice . '\'); $(\'#userLanguageForm\').submit()">';
+            $listLanguage .= '<div class="dropdown-item-content me-2">';
+            $listLanguage .= '<div class="dropdown-item-content-text"><img src="' . Config::$urlRoot . '/core/templates/img/flags/' . $codice . '.png" style="height:18px;" class="me-2"/>' . $lingua . '</div>';
+            $listLanguage .= '</div>';
+            $listLanguage .= '</a>';
+            $listLanguage .= '</li>';
         }
-        $out .= "</ul></li>";
-        
-        
+
         $title = Language::get("Seleziona una lingua");
-        $out= '<!-- Languages dropdown-->
+        $out = '<!-- Languages dropdown-->
                         <div class="dropdown dropdown-notifications d-none d-sm-block">
                             <button class="btn btn-lg btn-icon dropdown-toggle me-3" id="dropdownMenuNotifications" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="material-icons">translate</i></button>
                             <ul class="dropdown-menu dropdown-menu-end me-3 mt-3 py-0 overflow-hidden" aria-labelledby="dropdownMenuNotifications">
-                                <li><h6 class="dropdown-header bg-primary text-white fw-500 py-3">'.$title.'</h6></li>
+                                <li><h6 class="dropdown-header bg-primary text-white fw-500 py-3">' . $title . '</h6></li>
                                 <li><hr class="dropdown-divider my-0" /></li>
-                                '.$listLanguage.'
+                                ' . $listLanguage . '
                             </ul>
                         </div>
-<form id="userLanguageForm" method="post" style="display:inline;">
-				   			<input type="hidden" name="userChangeLanguage" id="userChangeLanguage"/>
-							</form>';
-
+                        <form id="userLanguageForm" method="post" style="display:inline;">
+				   		<input type="hidden" name="userChangeLanguage" id="userChangeLanguage"/>
+						</form>';
         return $out;
     }
 

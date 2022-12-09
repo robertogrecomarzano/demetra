@@ -1,10 +1,20 @@
-.btn
-{
-	margin-right:2px; 
-	margin-left:2px;
+.btn {
+	margin-right: 2px;
+	margin-left: 2px;
 }
-
 
 div.dataTables_wrapper div.dataTables_length select {
 	min-width: max-content;
+}
+
+.btn.btn-lg.dropdown-toggle.mdc-ripple-upgraded {
+	background-color: #212121;
+}
+
+.btn.btn-primary.btn-lg.dropdown-toggle.mdc-ripple-upgraded {
+	text-transform: none;
+}
+
+.form-control, .dataTable-input {
+	background-color: unset;
 }

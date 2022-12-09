@@ -4,7 +4,12 @@
 </head>
 <body class="nav-fixed bg-light">
 	<!-- Top app bar navigation menu-->
-	<nav class="top-app-bar navbar navbar-expand navbar-dark bg-dark">
+	{if $isDebug}
+		{assign var="bg_nav" value="danger"}
+	{else}
+		{assign var="bg_nav" value="dark"}
+	{/if}
+	<nav class="top-app-bar navbar navbar-expand navbar-dark bg-{$bg_nav}">
 		<div class="container-fluid px-4">
 			<!-- Drawer toggle button-->
 			<button class="btn btn-lg btn-icon order-1 order-lg-0"
@@ -12,18 +17,20 @@
 				<i class="material-icons">menu</i>
 			</button>
 			<!-- Navbar brand-->
-			<a class="navbar-brand me-auto" href="index.html"><div
-					class="text-uppercase font-monospace">{$title}</div></a>
+			<a class="navbar-brand me-auto" href="{$siteUrl}"><div class="text-uppercase font-monospace">{$title}</div></a>
+			<div class="text-uppercase font-monospace lead text-black"><strong>{form_lang value="DEBUG ATTIVO"}</strong></div>
 			<!-- Navbar items-->
 			<div class="d-flex align-items-center mx-3 me-lg-0">
+				{$userSimulationSuper}
 				<!-- Navbar-->
 				<ul class="navbar-nav d-none d-lg-flex">
-					<li class="nav-item"><a class="nav-link">Overview</a></li>
-					<li class="nav-item"><a class="nav-link" target="_blank">Documentation</a></li>
+					<li class="nav-item"><a class="nav-link" target="_blank">{form_lang value="Documentazione"}</a></li>
 				</ul>
 				<!-- Navbar buttons-->
 				<div class="d-flex">
+					
 					{$userChangeLanguage}
+					{$userSimulationProfilo}
 					<!-- Messages dropdown-->
 					<div class="dropdown dropdown-notifications d-none d-sm-block">
 
@@ -201,7 +208,9 @@
 							<div class="border p-3 p-sm-4 bg-black shadow-2 small">
 								<code class="text-white fs-6 mb-2">{$dump}</code>
 							</div>
-							{/if} {include file="$pagina"}
+							{/if}
+							{include file="$pagina"}
+							{$plgHelpMini}
 						</div>
 					</div>
 				</div>

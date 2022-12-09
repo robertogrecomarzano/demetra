@@ -56,6 +56,7 @@ $page->setCurrentAlias($pg);
  */
 $page->addPlugin("Menu");
 $page->addPlugin("Forms");
+$page->addPlugin("Helper");
 
 /**
  * Inizializza la pagina
@@ -121,9 +122,6 @@ $breadMenu = Menu::styleMenu("bread");
 $mainMenu = Menu::styleMenu("left");
 
 $modules = array(
-    "debug" => Config::$config["debug"] ? "debug" : "",
-    "collaudo" => Config::$config["collaudo"] ? "collaudo" : "",
-    "offline" => Config::$config["offline"] ? "offline" : "",
     "title" => Config::$config["denominazione"],
     "tecnico" => $page->tecnico,
     "contentTitle" => $page->title,

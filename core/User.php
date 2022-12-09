@@ -221,9 +221,9 @@ class User
         ));
 
         $res = (new self())->getUserData($userId);
-        
+
         $tot = count($res);
-        
+
         if ($tot > 0) {
 
             $gruppi = array();
@@ -257,7 +257,6 @@ class User
             $_SESSION['user']['permessi'] = Permission::getPrivileges();
 
             User::online("login");
-           
         }
     }
 
@@ -437,15 +436,28 @@ class User
                     User::getLoggedUserId(),
                     User::$ip
                 ));
-                Database::insert("INSERT INTO utenti_online (id,id_utente,ip,tm,page,url) VALUES(?,?,?,?,?,?)", array(
-                    session_id(),
-                    User::getLoggedUserId(),
-                    User::$ip,
-                    $tm,
-                    App::$pg,
-                    User::$url
-                ));
-                
+                $tot = Database::getCount("utenti_online", "id=?", [
+                    session_id()
+                ]);
+                if (empty($tot))
+                    Database::insert("INSERT INTO utenti_online (id,id_utente,ip,tm,page,url) VALUES(?,?,?,?,?,?)", array(
+                        session_id(),
+                        User::getLoggedUserId(),
+                        User::$ip,
+                        $tm,
+                        App::$pg,
+                        User::$url
+                    ));
+                else
+                    Database::update("UPDATE utenti_online SET id_utente=?, ip=?,tm=?,page=?,url=? WHERE id=?", [
+                        User::getLoggedUserId(),
+                        User::$ip,
+                        $tm,
+                        App::$pg,
+                        User::$url,
+                        session_id()
+                    ]);
+
                 break;
             case "logout":
                 Database::update("UPDATE  utenti_online SET status=0 WHERE id_utente=? AND ip=?", array(

@@ -24714,7 +24714,7 @@ div.code-toolbar > .toolbar .top-app-bar.navbar-light .card .card-actions .card-
 }
 .dropdown .dropdown-menu {
   border: none;
-  max-width: 17.5rem;
+ /* RGM: max-width: 17.5rem;*/
 }
 .dropdown .dropdown-menu .dropdown-item {
   overflow: hidden;

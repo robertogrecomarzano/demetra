@@ -631,8 +631,8 @@ class Page
             "templateExport" => $this->templateExport,
             "logo" => empty($this->logoCustom) ? "logo" : $this->logoCustom,
             "struttura" => Config::$config["denominazione"],
-            "isDebug" => Config::$config["debug"],
-            "isCollaudo" => Config::$config["collaudo"],
+            "isDebug" => Config::$config["is_debug"],
+            "isCollaudo" => Config::$config["is_collaudo"],
             "dump" => $this->dump,
             "userChangeLanguage" => App::userChangeLanguage()
         ));

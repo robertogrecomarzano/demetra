@@ -38,9 +38,10 @@ class Database
     static function setSqlError($error)
     {
         $db = DB::connection();
+        $page = Page::getInstance();
 
         if ($db->transactionLevel() > 0) {
-            $page = Page::getInstance();
+
             $page->addError("Transazione annullata");
             $db->rollBack();
         }
@@ -49,10 +50,10 @@ class Database
 
         $message = "ERRORE SQL<br />" . $error . "<br />" . self::$caller[0]["file"] . " alla linea " . self::$caller[0]["line"] . "";
         if ($debug)
-            print("<pre class='alert alert-danger'>$message</pre>");
+            $page->dump($message);
         else {
             if (User::isSuperUser())
-                print("<pre class='alert alert-danger'>$message</pre>");
+                $page->dump($message);
             else {
                 $page = Page::getInstance();
                 $utente = User::getLoggedUserName();

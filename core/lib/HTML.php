@@ -28,10 +28,10 @@ class HTML
      */
     static function HTMLAttribute($key, $value)
     {
-        if(is_bool($value))
+        if (is_bool($value))
             return $key;
         else
-        return $key . "=\"" . HTML::HTMLAttributeValue($value) . "\"";
+            return $key . "=\"" . HTML::HTMLAttributeValue($value) . "\"";
     }
 
     /**
@@ -54,7 +54,7 @@ class HTML
     {
         $tagOpener = "<";
         $jargs = "";
-        
+
         if (is_array($arguments)) {
             $args = array_map(array(
                 "App\Core\Lib\HTML",
@@ -66,7 +66,6 @@ class HTML
             $jargs = " " . $arguments;
         }
 
-        
         if (! empty($content) || $alwaysClosingTag) {
             $tagClosed = "</" . $tag . ">";
             $tagCloser = ">";
@@ -93,31 +92,34 @@ class HTML
      */
     static function selectFromArray($data, $valueField, $labelField, $selectedValue = null, $extra = array(), $first = true, $groups = true)
     {
-        $in = "";
+        $firstOption = "";
+
         if ($first)
-            $in .= HTML::tag("option");
-        $gr = "";
-        foreach ($data as $d) {
-            if ($groups) {
-                $gruppo = $d['gruppo'];
-                if ($gr != $gruppo) {
-                    $oArgsg = array(
-                        "label" => $gruppo
-                    );
-                    $in .= HTML::tag("optgroup", $oArgsg);
-                    $gr = $gruppo;
-                }
+            $firstOption .= HTML::tag("option");
+
+        foreach ($data as $gruppo => $options) {
+            $option = "";
+            foreach ($options as $o) {
+                $oArgs = array(
+                    "value" => $o[$valueField],
+                    "data-subtext" => $o["subtext"]
+                );
+                if (! empty($selectedValue) && $selectedValue == $o[$valueField])
+                    $oArgs['selected'] = "selected";
+
+                $option .= HTML::tag("option", $oArgs, $o[$labelField]);
             }
-            $oArgs = array(
-                "value" => $d[$valueField]
-            );
-            if ($selectedValue == $d[$valueField])
-                $oArgs['selected'] = "selected";
-            $in .= HTML::tag("option", $oArgs, $d[$labelField]);
+            if ($groups)
+                $out .= HTML::tag("optgroup", [
+                    "label" => $gruppo
+                ], $option);
+            else
+                $out .= $option;
         }
+
         $extra["class"] = ! isset($extra["class"]) ? "form-control" : $extra["class"];
-        $out = HTML::tag("select", $extra, $in);
-        return $out;
+
+        return HTML::tag("select", $extra, $firstOption . $out);
     }
 
     /**

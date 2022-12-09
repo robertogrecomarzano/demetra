@@ -484,8 +484,7 @@ class Form
     {
         $out = "";
         $args = Form::processStandardParams($params);
-
-        $out = HTML::selectFromArray($params["src"], $params['key'], $params['label'], $_POST[$args["name"]], $args);
+        $out = HTML::selectFromArray($params["src"], $params['key'], $params['label'], $_POST[$args["name"]], $args, $params["first"]);
         return $out;
     }
 
@@ -1671,7 +1670,7 @@ class Form
             case "index":
                 $btn = null;
                 if ($writable && $add)
-                    $btn =self::link(array(
+                    $btn = self::link(array(
                         "value" => $title,
                         "text" => true,
                         "img" => "visibility",
@@ -1679,7 +1678,7 @@ class Form
                         "class" => "btn btn-primary",
                         "writable" => $writable,
                         "href" => Config::$urlRoot . "/" . $alias . "/create"
-                    )) ."<hr />";
+                    )) . "<hr />";
 
                 if (! $custom_template) {
                     $table = "";

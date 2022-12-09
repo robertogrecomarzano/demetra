@@ -16,7 +16,8 @@
 	rel="stylesheet" />
 
 <!-- DataTables Stylesheet-->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs5/jszip-2.5.0/dt-1.13.1/b-2.3.3/b-colvis-2.3.3/b-html5-2.3.3/b-print-2.3.3/date-1.2.0/r-2.4.0/datatables.min.css"/>
+<link rel="stylesheet" type="text/css"
+	href="https://cdn.datatables.net/v/bs5/jszip-2.5.0/dt-1.13.1/b-2.3.3/b-colvis-2.3.3/b-html5-2.3.3/b-print-2.3.3/date-1.2.0/r-2.4.0/datatables.min.css" />
 
 <!-- Roboto and Roboto Mono fonts from Google Fonts-->
 <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"
@@ -49,5 +50,10 @@
 <!-- Summernote, usato per l'editing html -->
 <link href="{$siteUrl}/core/templates/vendor/summernote/summernote.css"
 	rel="stylesheet">
+
+
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet"
+	href="{$siteUrl}/core/templates/vendor/bootstrap-select-1.14.0-beta3/dist/css/bootstrap-select.min.css">
 
 {$css}
