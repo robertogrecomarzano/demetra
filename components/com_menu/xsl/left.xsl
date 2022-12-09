@@ -98,7 +98,7 @@
 				</xsl:choose>
 			</xsl:variable>
 				<div class="nav-link-icon">
-					<i class="{$link-style} fa-{$link} fa-fw text-{$link-color}"></i>
+					<i class="{$link-style} fa-{$link} fa-lg text-{$link-color}"></i>
 				</div>
 
 				<xsl:choose>

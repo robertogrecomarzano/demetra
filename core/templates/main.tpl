@@ -6,8 +6,10 @@
 	<!-- Top app bar navigation menu-->
 	{if $isDebug}
 		{assign var="bg_nav" value="danger"}
+		{assign var="debug" value="<span class='text-black'>[{form_lang value='DEBUG ATTIVO'}]</span>"}
 	{else}
 		{assign var="bg_nav" value="dark"}
+		{assign var="debug" value=""}
 	{/if}
 	<nav class="top-app-bar navbar navbar-expand navbar-dark bg-{$bg_nav}">
 		<div class="container-fluid px-4">
@@ -18,7 +20,6 @@
 			</button>
 			<!-- Navbar brand-->
 			<a class="navbar-brand me-auto" href="{$siteUrl}"><div class="text-uppercase font-monospace">{$title}</div></a>
-			<div class="text-uppercase font-monospace lead text-black"><strong>{form_lang value="DEBUG ATTIVO"}</strong></div>
 			<!-- Navbar items-->
 			<div class="d-flex align-items-center mx-3 me-lg-0">
 				{$userSimulationSuper}
@@ -174,7 +175,8 @@
 			<nav class="drawer accordion drawer-light bg-white"
 				id="drawerAccordion">
 				<div class="drawer-menu">
-					<div class="nav">{$left}</div>
+					
+					<div class="nav"><div class="drawer-menu-heading">{$debug}</div>{$left}</div>
 				</div>
 				<!-- Drawer footer        -->
 				<div class="drawer-footer border-top">

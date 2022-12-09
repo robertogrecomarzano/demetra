@@ -61,8 +61,8 @@ class User
             Menu::hideById("user/$idUtente");
 
             Menu::appendToNode($root, "home", Language::get("Home"), Language::get("Pagina iniziale"), Language::get("Pagina iniziale"), "", "", [
-                "icon" => "tachometer-alt",
-                "icon-color" => "red"
+                "icon" => "dashboard",
+                "icon-color" => "primary"
             ]);
 
             switch (User::getLoggedUserGroup()) {
