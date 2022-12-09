@@ -60,7 +60,7 @@
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center">
-                                                <mwc-formfield label="{form_lang value='Accetto temini e condizioni'}"><mwc-checkbox></mwc-checkbox></mwc-formfield>
+                                                {form_check iname='condizioni' label="{form_lang value='Accetto temini e condizioni'}" mwc=true required="required"}
                                             </div>
                                             <div class="form-group d-flex align-items-center justify-content-between mt-4 mb-0">
                                                 <a class="small fw-500 text-decoration-none" href="{$siteUrl}/authentication/login">{form_lang value="Login"}</a>

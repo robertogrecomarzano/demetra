@@ -73,7 +73,7 @@ class AuthenticationRegisterController extends BaseController implements IContro
 
         if (empty($this->page->errors)) {
             $sha_pwd = User::saltPassword($pwd);
-            $gruppo = User::getIdGruppo("operatore");
+            $gruppo = User::getIdGruppo("user");
 
             $db = DB::connection();
 

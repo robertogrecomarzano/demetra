@@ -32,10 +32,6 @@
 											{*form_tbox type='password' mdc=true iname='password' max=45 placeholder='Password' required="required"*}
 											{form_tbox mdc=true iname='password' type='password' placeholder="Password" outlined=true img="visibility_off" required="required"}
 										</div>
-										<div class="d-flex align-items-center">
-											<mwc-formfield label="{form_lang value='Ricorda password'}">
-											<mwc-checkbox></mwc-checkbox></mwc-formfield>
-										</div>
 										<div
 											class="form-group d-flex align-items-center justify-content-between mt-4 mb-0">
 											<a class="small fw-500 text-decoration-none" href="{$siteUrl}/authentication/passwordrecovery">{form_lang value="Password dimenticata?"}</a> 
