@@ -83,9 +83,11 @@ class Menu extends Plugin
      */
     static public function callHooks()
     {
-        foreach (Menu::$classHooks as $h)
-            if (class_exists($h))
-                call_user_func($h . '::addInMenuTree');
+        foreach (Menu::$classHooks as $h) {
+            if (class_exists('\\App\\Models\\' . $h))
+
+                call_user_func('\\App\\Models\\' . $h . '::addInMenuTree');
+        }
     }
 
     /**

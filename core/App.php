@@ -1,6 +1,7 @@
 <?php
 namespace App\Core;
 
+use App\Components\Menu;
 use App\Core\Lib\Database;
 use App\Core\Lib\Form;
 use App\Core\Lib\Language;
@@ -137,6 +138,9 @@ class App
         $classController = '\\App\\Core\\Controller\\' . $controllerName;
 
         $controller = null;
+
+        if (Menu::NodeNotInMenu() && ! in_array($page->alias, Config::$openPage))
+            Page::redirect("error");
 
         if (class_exists($classController)) {
 

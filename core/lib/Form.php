@@ -1673,7 +1673,7 @@ class Form
                     $btn = self::link(array(
                         "value" => $title,
                         "text" => true,
-                        "img" => "visibility",
+                        "img" => "add",
                         "title" => $title,
                         "class" => "btn btn-primary",
                         "writable" => $writable,
