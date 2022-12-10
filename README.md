@@ -1,6 +1,7 @@
-# square-app
+# demetra
 
-App sviluppata in php/mysql con bootstrap utilizzata come punto di partenza per nuovi progetti.
+App sviluppata in php/mysql con bootstrap per la gestione dei progetti del Ciheam Bari.
+
 
 
 # Introduzione
