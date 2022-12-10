@@ -1,5 +1,3 @@
-
-
 # square-app
 
 App sviluppata in php/mysql con bootstrap utilizzata come punto di partenza per nuovi progetti.
