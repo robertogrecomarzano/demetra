@@ -3,7 +3,6 @@
 App sviluppata in php/mysql con bootstrap per la gestione dei progetti del Ciheam Bari.
 
 
-
 # Introduzione
 
 L'intero sistema si basa sulla presenza di un unico file index.php che si occupa di includere il codice relativo alla singola pagina richiesta. L'url delle pagine rispecchia il path su disco della cartella stessa, quindi se ad esempio si crea la pagina "test", all'interno della directory principale del progetto troveremo nella cartella "pages" la sottocartella "test".
