@@ -68,6 +68,7 @@ Ogni pagina dell'app deve rispettare delle regole fisse per poter essere mappata
 ## Lingua
 
 L'app è multilingua e sfrutta le librerie di Google Translate per tradurre in automatico ogni etichetta presente nella pagina. Affinchè un etichetta venga tradotta deve essere inclusa nel tag modificatore smarty ***{form_lang value='etichetta da tradurre'}***. Ogni etichetta inserita nel tag {form_lang} verrà inserita nella tabella traduzioni ed a seconda della lingua scelta dall'utente, il sistema mostrerà la corretta traduzione.
+Per utilizzare le api di Google occorre creare un progeto su Google Clpoud Platform ed abilitare l'API Google Trnalsate, scaricare il file json e inserirlo nella root del progetto. Modificare il file Config.php impostando i valori "Google Cloud translation API JSON Key".
 
 ## Pagine di tipo tabella
 
