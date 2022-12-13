@@ -45,7 +45,6 @@ if ($_POST)
 
 $pg = ! empty($_GET['page']) ? $_GET['page'] : "authentication/login";
 $id = isset($_GET['id']) ? $_GET['id'] : 0;
-$pg2 = ($id > 0) ? $pg . "/" . $id : $pg;
 
 // Creazione oggetto pagina
 $page = Page::getInstance();
@@ -80,20 +79,17 @@ if (count($servizi) > 0)
         Menu::addClassHook($s['servizio']);
 Menu::callHooks(); // processa le voci di menu dinamiche delle classi
 Menu::createURLs(); // crea gli URL a partire dagli id
-$page->setTitles($pg2); // imposta i titoli
 
 $alias = $pg;
 $id = $page->getId();
 if (! empty($id))
     $alias .= "/" . $id;
 
-
-
 /**
  * Gestione route
  */
 App::checkRequest();
-
+$page->setTitles($pg); // imposta i titoli
 Menu::setActive($alias); // imposta pagina corrente nel menu
 
 $mainTemplateDir = Config::$serverRoot . DS . "core" . DS . "templates";
@@ -115,7 +111,7 @@ if (file_exists($cssFile))
 /**
  * Creazione menù laterale/bread con le voci aggiunte dai vari servizi
  */
-$breadMenu = Menu::styleMenu("bread");
+#$breadMenu = Menu::styleMenu("bread");
 $mainMenu = Menu::styleMenu("left");
 
 $modules = array(
@@ -125,7 +121,7 @@ $modules = array(
     "contentSubTitle" => $page->subTitle,
     "pageLabel" => $page->pageLabel,
     "left" => $mainMenu,
-    "top" => $breadMenu,
+    #"bread" => $breadMenu,
     "lang" => substr($lang, 0, 2),
     "lang_country" => $lang,
     "direction" => $lang == "ar_AR" ? "rtl" : ""

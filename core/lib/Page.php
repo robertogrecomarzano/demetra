@@ -426,21 +426,6 @@ class Page
     }
 
     /**
-     * Setta i titoli della pagina
-     *
-     * @param string $title
-     * @param string $subTitle
-     * @param string $preTitle
-     *            da implementare
-     */
-    function setTitle($title, $subTitle = "", $preTitle = "")
-    {
-        $this->title = $title;
-        $this->subTitle = $subTitle;
-        $this->preTitle = $preTitle;
-    }
-
-    /**
      * Cartella in cui Smarty crea le versioni già compilate dei template
      *
      * @return string
@@ -478,6 +463,9 @@ class Page
      */
     function setTitles($alias)
     {
+        if (str_ends_with($alias, "/create"))
+            $alias = preg_replace('#\/[^/]*$#', '', $alias);
+
         $label = Menu::getNodeSub("label", $alias);
         $desc = Menu::getNodeSub("desc", $alias);
         $pagelabel = Menu::getNodeSub("pagelabel", $alias);
