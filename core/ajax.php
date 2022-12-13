@@ -45,6 +45,8 @@ if (! empty($pagina)) {
 if (! isset($_SESSION['user']) && ! in_array($callPage, Config::$openPage) && ! in_array($alias, Config::$openPage))
     exit();
 
+ob_clean();
+
 if (isset($_GET['plugin']) && $_GET['plugin'] != "") {
     $action = $_GET['action'];
     $plugin = $_GET['plugin'];

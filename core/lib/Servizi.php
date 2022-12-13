@@ -45,7 +45,7 @@ class Servizi
         $id_utente = User::getLoggedUserId();
         $id_gruppo = User::getIdGruppo(User::getLoggedUserGroup());
 
-        $sql = "SELECT DISTINCT $field as servizio FROM 
+        $sql = "SELECT DISTINCT $field as servizio, posizione FROM 
 			servizi_utenti u JOIN 
 			servizi s USING(id_servizio) JOIN 
 			servizi_config_gruppo USING(id_servizio) 
@@ -78,7 +78,7 @@ class Servizi
         $id_gruppo = User::getIdGruppo($gruppo);
 
         if (User::isSuperUser() && ! $forza) {
-            $sql = "SELECT DISTINCT $field as servizio FROM servizi s JOIN
+            $sql = "SELECT DISTINCT $field as servizio, posizione FROM servizi s JOIN
 			servizi_config_gruppo USING(id_servizio)
 			WHERE is_attivo=1 ORDER BY posizione ASC";
             $rows = Database::getRows($sql);

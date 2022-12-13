@@ -264,14 +264,14 @@ class App
         if (! User::isSuperUser() && ! $_SESSION['user']['simulation']['superuser'])
             return "";
 
-        $sql = "SELECT u.*,g.nome AS gruppo,
+        $sql = "SELECT u.*, MIN(g.descrizione) AS gruppo,
         CONCAT(u.cognome,' ',u.nome) AS utente
 		FROM utenti u
 		JOIN utenti_has_gruppi ug USING(id_utente)
 		JOIN utenti_gruppi g USING(id_gruppo_utente)
 		WHERE u.record_attivo=1
-		GROUP BY id_utente
-		ORDER BY g.nome, username";
+		GROUP BY u.id_utente
+        ORDER BY gruppo,username";
 
         $utenti = Database::getRows($sql);
 

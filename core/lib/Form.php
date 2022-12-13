@@ -386,24 +386,18 @@ class Form
     {
         $args = Form::processStandardParams($params);
 
+        if ($params["class"] == "selectpicker")
+            $args["mwc"] = false;
+        else
+            $args["mwc"] = true;
+        
         $options = "";
 
-        if (isset($params["src"]) && empty($params["src"]) && $params["data-lockup"]) {
-            $warning = "Nessun valore disponibile.";
-            $href = Page::getURLStatic("tabelle");
-            $warning = "Nessun valore disponibile, andare in gestione tabelle.";
-            $link = html::tag("a", array(
-                "href" => $href,
-                "target" => "blanck"
-            ), $warning);
-            $out = "<span class='text-warning'><i class='fas fa-exclamation-triangle'> </i> $link</span>";
-            return $out;
-        }
-
         if ((isset($params['first']) && $params["first"]) || empty($params["src"]))
-            $options .= "<mwc-list-item></mwc-list-item>";
-
-        $out = HTML::tag("select", $args, $options);
+            if ($args["mwc"])
+                $options .= "<mwc-list-item></mwc-list-item>";
+            else
+                $options .= "<option></option>";
 
         if (isset($params["tabsrc"])) {
             $order = (isset($params["order"])) ? $params["order"] : $params["label"];
@@ -459,7 +453,11 @@ class Form
                         if (isset($params['label']))
                             $v = $v[$params['label']];
                     }
-                    $options .= HTML::tag("mwc-list-item", $targs, $v);
+
+                    if ($args["mwc"])
+                        $options .= HTML::tag("mwc-list-item", $targs, $v);
+                    else
+                        $options .= HTML::tag("option", $targs, $v);
                 }
 
                 if (isset($params['writable']) && ! $params['writable'])
@@ -467,7 +465,11 @@ class Form
 
                 $args["class"] = ! isset($args["class"]) ? "" : $args["class"];
                 $args["label"] = $params["placeholder"];
-                $out = HTML::tag("mwc-select", $args, $options);
+
+                if ($args["mwc"])
+                    $out = HTML::tag("mwc-select", $args, $options);
+                else
+                    $out = HTML::tag("select", $args, $options);
             }
         }
         return $out;
@@ -2170,6 +2172,7 @@ class Form
         $type = $value["type"];
 
         unset($others["required"]);
+
         switch ($type) {
             case "label":
                 $obj = Html::tag("label", null, $value["value"]);
@@ -2179,6 +2182,9 @@ class Form
                 break;
             case "checkbox":
                 $obj = self::check($others);
+                break;
+            case "checkboxs":
+                $obj = self::checks($others);
                 break;
             case "textarea":
                 $obj = self::textarea($others);

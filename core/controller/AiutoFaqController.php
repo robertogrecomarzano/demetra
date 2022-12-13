@@ -22,14 +22,14 @@ class AiutoFaqController extends TableController implements IController, ITableC
         $this->alias = $alias;
         $this->src["alias"] = $alias;
         $this->custom_template = false;
-        
+
         $this->table = "faq";
         $this->pk = "id_faq";
         $this->mappings = [
             "question" => "question",
             "answer" => "answer"
         ];
-        
+
         $this->other = [];
         $this->src["alias"] = $alias;
         $this->src["title"] = Language::get("Registra nuova Faq");
@@ -167,6 +167,12 @@ class AiutoFaqController extends TableController implements IController, ITableC
         // Personalizzare se necessario la logica per effettuare l'operazione di Clone
         $oldRow = Faq::find($request["id"]);
         $newRow = $oldRow->replicate();
+
+        $obj = new Faq();
+        foreach ($obj->getFillable() as $field)
+            if (! empty($newRow->$field))
+                $newRow->$field = $oldRow->$field . " (" . Language::get("copia") . ") ";
+
         $newId = $newRow->save();
         if (! $newId) {
             $this->page->addError("Errore in fase di clonazione");

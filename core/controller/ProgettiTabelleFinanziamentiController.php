@@ -6,15 +6,15 @@ use App\Core\ITableController;
 use App\Core\Lib\Form;
 use App\Core\Lib\Language;
 use App\Core\Lib\Page;
-use App\Core\Lib\Servizi;
 use App\Core\TableController;
-use App\Models\Gruppo;
+use App\Models\Donatore;
+use App\Models\Finanziamento;
 
 /**
- * Classe controller per la gestione della pagina admin/permessi/gruppi
+ * Classe controller per la gestione della pagina progetti/tabelle/finanziamenti
  * Classe autogenerata
  */
-class AdminPermessiGruppiController extends TableController implements IController, ITableController
+class ProgettiTabelleFinanziamentiController extends TableController implements IController, ITableController
 {
 
     public function __construct($alias)
@@ -23,11 +23,12 @@ class AdminPermessiGruppiController extends TableController implements IControll
         $this->alias = $alias;
         $this->src["alias"] = $alias;
         $this->custom_template = false;
-        $this->table = "utenti_gruppi";
-        $this->pk = "id_gruppo_utente";
+        $this->table = "progetti_finanziamenti_values";
+        $this->pk = "id_finanziamento";
         $this->mappings = [
-            "nome" => "nome",
-            "descrizione" => "descrizione"
+            "acronimo" => "acronimo",
+            "finanziamento" => "finanziamento",
+            "id_donatore" => "id_donatore"
         ];
         $this->other = [];
         $this->src["alias"] = $alias;
@@ -39,21 +40,32 @@ class AdminPermessiGruppiController extends TableController implements IControll
         $this->src["delete"] = true;
         $this->src["add"] = true;
         $this->src["clone"] = true;
+
+        $donatori = Donatore::all()->pluck('donatore', 'id_donatore', 'id_donatore');
+
         $this->src["fields"] = [
-            "nome" => [
-                "label" => Language::get("Nome"),
-                "writable" => true
+            "acronimo" => [
+                "label" => Language::get("Acronimo"),
+                "writable" => true | false // true di default
             ],
-            "descrizione" => [
-                "label" => Language::get("Descrizione"),
-                "writable" => true
+            "finanziamento" => [
+                "label" => Language::get("Programma di finanziamento")
+            ],
+            "id_donatore" => [
+                "label" => Language::get("Donatore"),
+                "type" => "select",
+                "others" => [
+                    "src" => $donatori,
+                    "first" => true,
+                    "required" => "required"
+                ]
             ]
         ];
     }
 
     public function edit($request)
     {
-        $row = Gruppo::find($request["id"])->toArray();
+        $row = Finanziamento::find($request["id"])->getOriginal();
         Form::mappingsAssignPost([
             $row
         ], "mod", $request["id"], $this->pk, $this->mappings, $this->page);
@@ -64,7 +76,7 @@ class AdminPermessiGruppiController extends TableController implements IControll
 
     public function show($request)
     {
-        $row = Gruppo::find($request["id"])->toArray();
+        $row = Finanziamento::find($request["id"])->toArray();
         $this->src["rows"] = $row;
         $this->src["view"] = "edit";
         $this->page->assign("src", $this->src);
@@ -72,7 +84,7 @@ class AdminPermessiGruppiController extends TableController implements IControll
 
     public function index($request)
     {
-        $rows = Gruppo::all()->toArray();
+        $rows = Finanziamento::all()->toArray();
         $this->src["rows"] = $rows;
         $this->page->assign("src", $this->src);
     }
@@ -84,24 +96,20 @@ class AdminPermessiGruppiController extends TableController implements IControll
 
     public function update($request, $redirect = true)
     {
-        $check = $this->check($request, false);
-        if (! $check)
-            Page::redirect($this->alias, "", true, Language::get("Record già presente"), "danger");
-
+        $result = false;
         $id = $request["id"];
-
-        $obj = new Gruppo();
+        // TODO:
+        // Personalizzare se necessario la logica per effettuare l'operazione di Update
+        // Se l'operazione è andata a buon fine eseguire il redirect
+        $obj = new Finanziamento();
         foreach ($obj->getFillable() as $field)
             $params[$field] = $request[$field];
-
         try {
-            Gruppo::where($this->pk, $id)->update($params);
+            Finanziamento::where($this->pk, $id)->update($params);
         } catch (\Illuminate\Database\QueryException $ex) {
-
             $this->page->addError(Language::get("Errore in fase di aggiornamento"));
             return false;
         }
-
         if ($redirect)
             Page::redirect($this->alias, "", true, Language::get("Record aggiornato"));
         else
@@ -110,24 +118,16 @@ class AdminPermessiGruppiController extends TableController implements IControll
 
     public function store($request, $redirect = true)
     {
-        $check = $this->check($request, true);
-        if (! $check)
-            Page::redirect($this->alias, "", true, Language::get("Record già presente"), "danger");
-
-        $obj = new Gruppo();
+        // TODO:
+        // Personalizzare se necessario la logica per effettuare l'operazione di Insert
+        $obj = new Finanziamento();
         foreach ($obj->getFillable() as $field)
             $params[$field] = $request[$field];
         $newId = $obj->insertGetId($params);
-
         if (! $newId) {
             $this->page->addError("Errore in fase di registrazione");
             return false;
         }
-
-        $servizi = Servizi::getServizi("id_servizio");
-        foreach ($servizi as $s)
-            Servizi::addServizioGruppoRegione($newId, $s['servizio']);
-
         if ($redirect)
             Page::redirect($this->alias, "", true, Language::get("Record registrato"));
         else
@@ -138,12 +138,9 @@ class AdminPermessiGruppiController extends TableController implements IControll
     {
         $result = false;
         $id = $request["id"];
-
-        $result = Gruppo::destroy($id);
-
         // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Delete
-        // Se l'operazione è andata a buon fine eseguire il redirect
+        // Personalizzare se necessario la logica per effettuare l'operazione di Delete
+        $result = Finanziamento::destroy($id);
         if (! $result) {
             $this->page->addError("Errore in fase di cancellazione");
             return false;
@@ -175,41 +172,20 @@ class AdminPermessiGruppiController extends TableController implements IControll
     public function clone($request)
     {
         // TODO:
-        // Inserire qui la logica per effettuare l'operazione di Clone
-        // Se l'operazione è andata a buon fine eseguire il redirect
-        $oldRow = Gruppo::find($request["id"]);
+        // Personalizzare se necessario la logica per effettuare l'operazione di Clone
+        $oldRow = Finanziamento::find($request["id"]);
         $newRow = $oldRow->replicate();
-
-        $obj = new Gruppo();
+        
+        $obj = new Finanziamento();
         foreach ($obj->getFillable() as $field)
             if (! empty($newRow->$field))
                 $newRow->$field = $oldRow->$field . " (" . Language::get("copia") . ") ";
-
+            
         $newId = $newRow->save();
-
         if (! $newId) {
-            $this->page->addError("Errore in fase di registrazione");
+            $this->page->addError("Errore in fase di clonazione");
             return false;
         }
         Page::redirect($this->alias, "", true, Language::get("Record clonato"));
-    }
-
-    private function check($request, $isNew = false)
-    {
-        if (! isset($request['nome']) || empty($request['nome']))
-            $errors[] = "Indicare il gruppo.";
-        if (! isset($request['descrizione']) || empty($request['descrizione']))
-            $errors[] = "Indicare una descrizione per il gruppo.";
-
-        if ($isNew)
-            if (Form::checkDupes($this->table, $this->mappings, array(
-                "nome"
-            )))
-                $errors[] = "Gruppo già inserito, indicare un'altra voce e riprovare!";
-
-        foreach ($errors as $e)
-            $this->page->addError($e);
-
-        return empty($errors);
     }
 }

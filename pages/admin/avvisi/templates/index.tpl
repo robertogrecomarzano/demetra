@@ -12,7 +12,11 @@
 	<tbody>
 		{foreach from=$src.rows item=r}
 		<tr>
-			<td>{form_link href="{$siteUrl}/{$src.alias}/{$r.{$src.pk}}" img='visibility' class="btn btn-primary"}{form_link href="{$siteUrl}/{$src.alias}/{$r.{$src.pk}}/edit" img='edit' class="btn btn-warning"}{form_delete id={$r.{$src.pk}} leading-icon=false}</td>
+			<td>{form_link href="{$siteUrl}/{$src.alias}/{$r.{$src.pk}}" img='visibility' class="btn btn-primary"}{form_link href="{$siteUrl}/{$src.alias}/{$r.{$src.pk}}/edit" img='edit' class="btn btn-warning"}
+				{form_opening  action="{$siteUrl}/{$src.alias}/{$r.{$src.pk}}" style="display:inline;"}
+				{form_delete id={$r.{$src.pk}} leading-icon=false}
+				{form_closing data-method='DELETE'}
+			</td>
 			<td>{$r.FIELD_1}</td>
 			<td>{$r.FIELD_2}</td>
 			<td>{$r.FIELD_N}</td>

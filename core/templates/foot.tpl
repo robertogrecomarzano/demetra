@@ -44,6 +44,7 @@
 
 <!-- Bootstrap select picker -->
 <script src="{$siteUrl}/core/templates/vendor/bootstrap-select-1.14.0-beta3/dist/js/bootstrap-select.min.js"></script>
+<script src="{$siteUrl}/core/templates/vendor/bootstrap-select-1.14.0-beta3/js/i18n/defaults-{$lang_country}.js"></script>
 
 <!-- Custom script -->
 {$js}

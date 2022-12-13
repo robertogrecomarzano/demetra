@@ -10,6 +10,10 @@ use App\Core\TableController;
 use App\Core\User;
 use App\Core\Lib\Message;
 use App\Core\ITableController;
+use App\Models\Servizio;
+use App\Models\Utente;
+use App\Models\Gruppo;
+use Illuminate\Support\Facades\DB;
 
 class AdminUtentiController extends TableController implements ITableController
 {
@@ -95,29 +99,21 @@ class AdminUtentiController extends TableController implements ITableController
 
     public function edit($request)
     {
-        $row = Database::getRow("SELECT * FROM $this->table WHERE $this->pk=?", [
-            $request["id"]
-        ]);
+        $row = Utente::find($request["id"])->toArray();
         Form::mappingsAssignPost([
             $row
         ], "mod", $request["id"], $this->pk, $this->mappings, $this->page);
 
+        $utente = Utente::find($request["id"]);
+
         unset($_POST['gruppo']);
-        $gruppo = Database::getRows("SELECT * FROM utenti_gruppi g JOIN utenti_has_gruppi USING(id_gruppo_utente) WHERE id_utente=?", [
-            $request["id"]
-        ]);
-        foreach ($gruppo as $a)
+        $gruppi = $utente->gruppi()->get();
+        foreach ($gruppi as $a)
             $_POST['gruppo'][] = $a['id_gruppo_utente'];
 
         unset($_POST['servizio']);
-        $servizio = Database::getRows("SELECT DISTINCT cs.id_servizio,  cs.servizio
-			FROM servizi_utenti us
-			JOIN servizi cs USING(id_servizio)
-			JOIN servizi_config_gruppo USING(id_servizio)
-			WHERE id_utente=?", [
-            $request["id"]
-        ]);
-        foreach ($servizio as $ids)
+        $servizi = $utente->servizi()->get();
+        foreach ($servizi as $ids)
             $_POST['servizio'][] = $ids['id_servizio'];
 
         $this->page->assign("id", $request["id"]);
@@ -130,26 +126,18 @@ class AdminUtentiController extends TableController implements ITableController
 
     public function show($request)
     {
-        $row = Database::getRow("SELECT * FROM $this->table WHERE $this->pk=?", [
-            $request["id"]
-        ]);
+        $row = Utente::find($request["id"])->toArray();
 
-        $gruppo = Database::getRows("SELECT g.nome FROM utenti_gruppi g JOIN utenti_has_gruppi USING(id_gruppo_utente) WHERE id_utente=?", [
-            $request["id"]
-        ]);
-        foreach ($gruppo as $a)
-            $row['gruppo'][] = $a['nome'];
-        $row["gruppo"] = implode(", ", $row["gruppo"]);
+        $utente = Utente::find($request["id"]);
 
-        $servizio = Database::getRows("SELECT DISTINCT cs.id_servizio,  cs.servizio
-			FROM servizi_utenti us
-			JOIN servizi cs USING(id_servizio)
-			JOIN servizi_config_gruppo USING(id_servizio)
-			WHERE id_utente=?", [
-            $request["id"]
-        ]);
-        foreach ($servizio as $a)
-            $row['servizi'][] = $a['servizio'];
+        $gruppi = $utente->gruppi()->get();
+        foreach ($gruppi as $gruppo)
+            $row["gruppi"][] = $gruppo->descrizione;
+        $row["gruppo"] = implode(", ", $row["gruppi"]);
+
+        $servizi = $utente->servizi()->get();
+        foreach ($servizi as $servizio)
+            $row["servizi"][] = $servizio->descrizione;
         $row["servizi"] = implode(", ", $row["servizi"]);
 
         $this->src["rows"] = $row;
@@ -159,15 +147,20 @@ class AdminUtentiController extends TableController implements ITableController
 
     public function index($request)
     {
-        $sql = "SELECT u.*, GROUP_CONCAT(DISTINCT(g.nome)) AS profili
-            FROM utenti u
-            LEFT JOIN utenti_has_gruppi ug USING(id_utente)
-            LEFT JOIN utenti_gruppi g USING(id_gruppo_utente)
-            WHERE u.record_attivo=1
-            GROUP BY id_utente
-            ORDER BY g.nome ASC";
+        $rows = Utente::all()->where("record_attivo", "=", 1)->toArray();
+        foreach ($rows as &$row) {
+            $utente = Utente::find($row["id_utente"]);
 
-        $rows = Database::getRows($sql);
+            $gruppi = $utente->gruppi()->get();
+            foreach ($gruppi as $gruppo)
+                $row["gruppi"][] = $gruppo->descrizione;
+            $row["profili"] = implode(", ", $row["gruppi"]);
+
+            $servizi = $utente->servizi()->get();
+            foreach ($servizi as $servizio)
+                $row["servizi"][] = $servizio->descrizione;
+            $row["servizi"] = implode(", ", $row["servizi"]);
+        }
 
         $this->src["rows"] = $rows;
         $this->page->assign("src", $this->src);
@@ -203,7 +196,6 @@ class AdminUtentiController extends TableController implements ITableController
 
         if (isset($request['gruppo']))
             foreach ($request['gruppo'] as $g) {
-                echo "$newId,$g,<br>";
                 Database::insert("INSERT INTO utenti_has_gruppi SET id_utente=?, id_gruppo_utente=?", [
                     $newId,
                     $g
@@ -311,8 +303,12 @@ class AdminUtentiController extends TableController implements ITableController
 
     public function delete($request)
     {
-        
-        // TODO: inserire la logica per il DELETE
+        $utente = Utente::find($request["id"]);
+        if ($utente) {
+            $utente->record_attivo = 0;
+            $utente->save();
+        }
+
         Page::redirect($this->alias, "", true, Language::get("Utente eliminato"));
     }
 
@@ -321,12 +317,15 @@ class AdminUtentiController extends TableController implements ITableController
      */
     private function assignOthersParams()
     {
-        foreach (Database::getRows("SELECT id_gruppo_utente,descrizione FROM utenti_gruppi") as $gruppo)
-            $gruppi[$gruppo["id_gruppo_utente"]] = $gruppo["descrizione"];
+        $gruppi = [];
+
+        foreach (Gruppo::all()->pluck('descrizione', 'id_gruppo_utente') as $key => $gruppo)
+            $gruppi[$key] = $gruppo;
         $this->page->assign("gruppi", $gruppi);
 
-        foreach (Database::getRows("SELECT DISTINCT id_servizio,descrizione FROM servizi_config_gruppo cs JOIN servizi USING(id_servizio)") as $servizio)
-            $servizi[$servizio["id_servizio"]] = $servizio["descrizione"];
+        $servizi = Servizio::all()->pluck('descrizione', 'id_servizio');
+        foreach ($servizi as $key => $servizio)
+            $servizi[$key] = $servizio;
         $this->page->assign("servizi", $servizi);
     }
 

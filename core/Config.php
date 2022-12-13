@@ -20,7 +20,7 @@ class Config
      *
      * @var string
      */
-    public static $app = "Square App";
+    public static $app = "DEMETRA - sviluppo";
 
     /**
      * Default language
@@ -87,21 +87,21 @@ class Config
      *
      * @var string
      */
-    public static $serverRoot = 'D:\wamp\www\square-app';
+    public static $serverRoot = 'D:\wamp\www\demetra';
 
     /**
      * Public folder
      *
      * @var string
      */
-    public static $publicRoot = 'D:\wamp\www\square-app\public';
+    public static $publicRoot = 'D:\wamp\www\demetra\public';
 
     /**
      * Installation root (web/URL)
      *
      * @var string
      */
-    public static $urlRoot = "http://localhost/square-app";
+    public static $urlRoot = "http://localhost/demetra";
 
     // --------
     // Security

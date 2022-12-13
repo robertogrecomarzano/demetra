@@ -197,6 +197,12 @@ class AdminAvvisiController extends TableController implements IController, ITab
         // Personalizzare se necessario la logica per effettuare l'operazione di Clone
         $oldRow = Avviso::find($request["id"]);
         $newRow = $oldRow->replicate();
+
+        $obj = new Avviso();
+        foreach ($obj->getFillable() as $field)
+            if (! empty($newRow->$field))
+                $newRow->$field = $oldRow->$field . " (" . Language::get("copia") . ") ";
+
         $newId = $newRow->save();
         if (! $newId) {
             $this->page->addError("Errore in fase di clonazione");

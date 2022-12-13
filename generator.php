@@ -2,7 +2,8 @@
 /**
  * Script da eseguire da console per creare la cartella della nuova pagina e relativo controller
  * Accetta i seguenti parametri
- *  
+ *
+ * Utilizza PHP Code Generator  https://doc.nette.org/en/php-generator
  --folder (valore unico. Es. user, user/profile)
  --extends (classe da estendere, di default viene usato BaseController) [facoltativo]
  --implements (interfacce da implementare separate da "," di default viene usato IController) [facoltativo]
@@ -97,8 +98,12 @@ if ($extends == "TableController")
 foreach ($implements as $i)
     $namespace->addUse("App\\Core\\$i");
 
-if ($model != "ClassNameToRename")
+if ($model != "ClassNameToRename") {
     $namespace->addUse("App\\Models\\$model");
+
+    if (! file_exists("models/$model.php"))
+        copy("models/_GenericModel.php", "models/$model.php");
+}
 
 $class = $namespace->addClass($className);
 $class->setExtends("App\\Core\\$extends")->addComment("Classe controller per la gestione della pagina $folder\nClasse autogenerata\n\n");
@@ -113,8 +118,8 @@ $construct = $class->addMethod('__construct')
 
 if ($extends == "TableController")
     $construct->addBody('$this->custom_template = false;')
-        ->addBody('$this->table = "table";')
-        ->addBody('$this->pk = "pk";')
+        ->addBody('$this->table = "TABLE_NAME";')
+        ->addBody('$this->pk = "PRIMARY_KEY";')
         ->addBody('$this->mappings = [')
         ->addBody('"sql_column_1" => "html_field_1",')
         ->addBody('"sql_column_2" => "html_field_2",')
@@ -307,6 +312,10 @@ foreach (array_unique($methods) as $methodName) {
                     ->addBody('// Personalizzare se necessario la logica per effettuare l\'operazione di Clone')
                     ->addBody('$oldRow = ' . $model . '::find($request["id"]);')
                     ->addBody('$newRow = $oldRow->replicate();')
+                    ->addBody('$obj = new ' . $model . '();')
+                    ->addBody('foreach ($obj->getFillable() as $field)')
+                    ->addBody('if (! empty($newRow->$field))')
+                    ->addBody('$newRow->$field = $oldRow->$field . " (" . Language::get("copia") . ") ";')
                     ->addBody('$newId = $newRow->save();')
                     ->addBody('if (! $newId) {')
                     ->addBody('$this->page->addError("Errore in fase di clonazione");')
